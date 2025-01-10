@@ -1,0 +1,14 @@
+import React from 'react'
+import { Outlet, Navigate } from 'react-router-dom';
+
+const RootLayout = () => {
+
+  return (
+    <section>
+      <Outlet/>
+    </section>
+    
+  )
+}
+
+export default RootLayout
