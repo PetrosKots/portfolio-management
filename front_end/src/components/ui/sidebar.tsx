@@ -11,6 +11,7 @@ import AttachMoneyOutlinedIcon from '@mui/icons-material/AttachMoneyOutlined';
 import ShowChartOutlinedIcon from '@mui/icons-material/ShowChartOutlined';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import FactoryOutlinedIcon from '@mui/icons-material/FactoryOutlined';
+import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
 
 const HomeSidebar: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
@@ -58,8 +59,8 @@ const HomeSidebar: React.FC = () => {
                 alignItems="center"
                 ml="15px"
               >
-                <Typography variant="h5" color={colors.neutralLight}>
-                  Portfolio Management
+                <Typography variant="h5" color={colors.neutralLight} style={{whiteSpace: 'pre-line',  textAlign: 'center'}}>
+                  Portfolio {'\n'} Management
                 </Typography>
                 <IconButton onClick={() => setIsCollapsed(!isCollapsed)}>
                   <MenuOutlinedIcon style={{ color: colors.neutralLight }} />
@@ -99,6 +100,15 @@ const HomeSidebar: React.FC = () => {
           >
             Charts
           </MenuItem>
+          
+          <MenuItem
+            component={<Link to="/dividends" />}
+            icon={<PaymentsOutlinedIcon style={{ color: colors.secondary }} />}
+            style={{ color: colors.neutralLight }}
+          >
+            Dividends
+          </MenuItem>
+
 
           {!isCollapsed && (
             <Typography

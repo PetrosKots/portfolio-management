@@ -1,25 +1,34 @@
 import React from 'react'
 import { Route, Routes } from 'react-router-dom'
+import { useState, useEffect } from "react";
 import './globals.css'
-import SigninForm from './_auth/forms/SigninForm'
-import { Home } from './_root/pages'
-import SignupForm from './_auth/forms/SignupForm'
-import AuthLayout from './_auth/AuthLayout'
-import RootLayout from './_root/RootLayout'
+import HomeSidebar from '@/components/ui/sidebar';
+import { Home } from './scenes/home'
+import RootLayout from './scenes/RootLayout'
+import { Sidebar } from 'react-pro-sidebar';
+import { fetchUsers } from "./api";
+
 
 const App = () => {
+  const [response, setResponse] = useState("");
+
+  useEffect(() => {
+    fetchUsers()
+      .then((res) => setResponse(JSON.stringify(res.data, null, 2)))
+      .catch((err) => setResponse(`Error: ${err.message}`));
+  }, []);
   return (
+    
+    
+    <main className='flex h-screen'>
+      
+      
 
-    <main className='fles h-screen'> 
+      <HomeSidebar/>  
        
+      <div style={{ flex: 1, padding: '20px' }}>
       <Routes>
-        {/* public routes */}
-        <Route element={<AuthLayout />}>
-
-          <Route path="/sign-in" element={<SigninForm />}/>
-          <Route path="/sign-up" element={<SignupForm />}/>
-  
-        </Route>
+        
         
 
 
@@ -30,6 +39,7 @@ const App = () => {
           <Route path='/dashboard' element={<Home />}/>
           <Route path='/portfolios' element={<Home />}/>
           <Route path='/charts' element={<Home />}/>
+          <Route path='/dividends' element={<Home />}/>
           <Route path='/investments' element={<Home />}/>
           <Route path='/risk' element={<Home />}/>
           <Route path='/industries' element={<Home />}/>
@@ -37,7 +47,8 @@ const App = () => {
 
         </Route> 
       </Routes>
-      
+      </div>
+      <h1>{response}</h1>
     </main>
     
   )
