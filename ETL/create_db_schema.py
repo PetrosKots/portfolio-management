@@ -27,13 +27,13 @@ try:
 
         Create_Investments = (
         "CREATE TABLE IF NOT EXISTS Investments ("
-        "investment_id INT PRIMARY KEY, "
+        "investment_id INT AUTO_INCREMENT PRIMARY KEY, "
         "portfolio_id INT, "
         "company_id VARCHAR(10), "
         "date DATE, "
         "amount_invested INT, "
-        "FOREIGN KEY (portfolio_id) REFERENCES Portfolios(portfolio_id), "
-        "FOREIGN KEY (company_id) REFERENCES Companies(company_id))"
+        "FOREIGN KEY (portfolio_id) REFERENCES Portfolios(portfolio_id))"
+        
     )
 
         Create_Historical_data = (
