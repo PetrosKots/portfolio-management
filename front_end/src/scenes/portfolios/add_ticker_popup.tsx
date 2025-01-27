@@ -17,7 +17,7 @@ import FormControl from '@mui/material/FormControl';
 import FilledInput from '@mui/material/FilledInput';
 import{Box} from '@mui/material'
 import axios from "axios";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 
 
@@ -33,7 +33,7 @@ interface TickerData {
 }
 
 const TickerPopup: React.FC<PopupProps> = ({ open, onClose, selectedPortfolio }) => {
-  const [searchParams, setSearchParams] = useSearchParams(); // Get and set URL search params
+
   const navigate = useNavigate(); // React Router navigation
   const [selectedTickers, setSelectedTickers] = useState<TickerData[]>([]); // Store multiple selected tickers
   const [inputValue, setInputValue] = useState(""); // Track the input value
@@ -77,12 +77,12 @@ const TickerPopup: React.FC<PopupProps> = ({ open, onClose, selectedPortfolio })
       // Update the investment dictionary for the specific ticker
       setInvestmentDict((prevDict) => {
         const updatedDict = { ...prevDict, [ticker.ticker]: newInvestments };
-        console.log("Updated Investment Dictionary:", updatedDict);  // Log the dictionary
         return updatedDict;
       });
     }
   };
   const handleAdd = async () => {
+    
     if (investmentDict) {
       
   
@@ -105,7 +105,6 @@ const TickerPopup: React.FC<PopupProps> = ({ open, onClose, selectedPortfolio })
         }
   
         
-  
         // Send the entire array of investments to the API
         const post_response=await axios.post(
           `http://localhost:5000/portfolios/investments?portfolio_name=${selectedPortfolio}`, // Your endpoint

@@ -30,7 +30,7 @@ app.get("/portfolios", (req, res) => {
   //if portfolio name is provided
   if (portfolio_name) {
     
-    const query = "SELECT company_id,amount_invested,date FROM Portfolios p INNER JOIN Investments i ON p.portfolio_id=i.portfolio_id WHERE portfolio_name=?";
+    const query = "SELECT investment_id,company_id,amount_invested,date FROM Portfolios p INNER JOIN Investments i ON p.portfolio_id=i.portfolio_id WHERE portfolio_name=?";
     db.query(query, [portfolio_name], (err, results) => {
       if (err) {
         res.status(500).json({ error: err.message });
@@ -107,7 +107,7 @@ app.post("/portfolios/investments", (req, res) => {
           if (err) {
             return res.status(500).json({ error: err.message });
           } else {
-            // Step 4: Respond with the number of inserted rows
+            // Respond with the number of inserted rows
             res.json({ insertedRows: insertResults.affectedRows });
           }
         });
@@ -118,6 +118,81 @@ app.post("/portfolios/investments", (req, res) => {
     }
   );
 });
+
+//endpoint to remove investments
+app.delete("/portfolios/investments", (req, res) => {
+  const {investment_id}=req.query //getting the id of the investment to delete
+  int_id=parseInt(investment_id, 10) //parsing it to int
+
+  //query to the remove the row
+  db.query(
+    "DELETE FROM Investments WHERE investment_id=?",
+    [int_id],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+    
+    }
+    )
+});
+
+//endpoint to delete portfolio
+app.delete("/portfolios", (req, res) => {
+  const {portfolio_name}=req.query //getting the portfolio name that needs to be deleted
+  
+  
+  
+  db.query(
+
+    "SELECT portfolio_id FROM Portfolios WHERE portfolio_name=?", //get the portfolio id by the given name
+    [portfolio_name],
+
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      
+      // If portfolio exists, 
+      if (results.length > 0){
+
+        const portfolio_id = results[0].portfolio_id;
+
+        const del_investments_query="DELETE FROM Investments WHERE portfolio_id=?" //query to delete the investments of the portfolio
+
+        const del_portfolio_query="DELETE FROM Portfolios WHERE portfolio_id=?" //query to delete the portfolio
+
+
+        db.query(del_investments_query, portfolio_id, (err, investmentResults) => { //firstly delete the investments
+                                                                                    
+          if (err) {
+            return res.status(500).json({ error: err.message });
+          } 
+
+          db.query(del_portfolio_query, portfolio_id, (err, portfolioResults) => { //then delete the portfolio
+            if (err) {
+              return res.status(500).json({ error: err.message });
+            } 
+            res.json({ 
+              
+              deletedInvestments: investmentResults.affectedRows, //if everything successful send response
+              deletedPortfolio: portfolioResults.affectedRows
+            })
+  
+  
+          }
+          
+          )
+        }
+      ) 
+      }else {
+        // If no portfolio found, send a 404 error
+        res.status(404).json({ error: "Portfolio not found" });
+      }
+      }
+    )
+});
+
 
 
 

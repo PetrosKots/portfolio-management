@@ -2,7 +2,7 @@ import React, { useState,useEffect } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box } from "@mui/material";
 import Textarea from '@mui/joy/Textarea';
 import axios from "axios";
-
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 
 interface PopupProps {
@@ -13,6 +13,7 @@ interface PopupProps {
 const Popup: React.FC<PopupProps> = ({ open, onClose }) => {
   
   const [newPortfolio,setNewPortfolio]= useState<string>("");
+  const navigate = useNavigate(); // React Router navigation
 
   //post request to the API to add the new portfolio to the database
   const handleCreate = async () => {
@@ -25,6 +26,7 @@ const Popup: React.FC<PopupProps> = ({ open, onClose }) => {
 
         setNewPortfolio(""); // Clear input after submission
         onClose(); // Close the dialog
+        navigate(`/portfolios?portfolio_name=${newPortfolio}`, { replace: true });//navigate to the new portfolio page 
         window.location.reload(); //reload the page
       } catch (error) {
         console.error("Error creating portfolio:", error);
