@@ -242,7 +242,7 @@ app.delete("/portfolios", (req, res) => {
     )
 });
 
-//end point to fecth the last closing price of a ticker
+//endpoint to fecth the last closing price of a ticker
 
 app.get("/last-closing", (req, res) => {
   const {companies}=req.query;
@@ -273,6 +273,68 @@ app.get("/last-closing", (req, res) => {
 
 });
 
+
+//endpoint to fetch the closing prices of the portfolio investments for this month
+app.get("/closing/this-month", (req, res) => {
+  const {portfolio_name}=req.query
+
+  today=new Date()
+  const first_of_this_month=new Date(today.getFullYear(), today.getMonth(), 1)
+
+  db.query(
+    "SELECT portfolio_id FROM Portfolios WHERE portfolio_name=?",
+    [portfolio_name],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      
+      // If portfolio exists, proceed with inserting multiple investments
+      if (results.length > 0) {
+        const portfolio_id = results[0].portfolio_id;
+        
+        const query=`
+        SELECT i.company_id,quantity,average_price,h3.date,closing_price
+        FROM Investments i
+        INNER JOIN
+        (
+          SELECT h1.company_id,date,closing_price
+          FROM(
+            SELECT company_id,date,closing_price
+            FROM Historical_data
+            WHERE date>?) h1 
+            INNER JOIN (SELECT company_id FROM Investments WHERE portfolio_id=?  ) h2
+            ON h1.company_id=h2.company_id
+        ) h3 ON i.company_id=h3.company_id 
+            `;
+      
+        db.query(query, [first_of_this_month,portfolio_id], (err, insertResults) => {
+          if (err) {
+            return res.status(500).json({ error: err.message });
+          } else {
+            // Respond with the number of inserted rows
+            res.json(insertResults);
+          }
+        });
+      } else {
+        // If no portfolio found, send a 404 error
+        res.status(404).json({ error: "Portfolio not found" });
+      }
+    }
+  );
+  
+
+  
+
+    
+    
+  
+ 
+
+  
+  
+
+});
 
 // Start the server
 const PORT = process.env.PORT || 5000;

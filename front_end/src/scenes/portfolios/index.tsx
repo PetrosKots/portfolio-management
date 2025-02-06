@@ -62,6 +62,7 @@ const Portfolios = () => {
   const [selectedRows, setSelectedRows] = useState<number[]>([]); // Store selected rows for deletion
   const [data,setData]=useState<PortfolioData[]>([])
   const [closingPrices, setClosingPrices] = useState<any>(null);
+  const [thisMonthData, setThisMonthData] = useState<any>(null);
   
   useEffect(() => {
     // Fetch the list of portfolios
@@ -113,7 +114,7 @@ const Portfolios = () => {
               performance:(( (row["Last Closing"]-row.average_price)/row.average_price)*100).toFixed(1) +"%"
             }));
             setData(response.data)
-            console.log(updatedData)
+            
             // Set DataGrid columns and data
             setColumns(allColumns);
             setPortfolioData(updatedData);
@@ -278,6 +279,18 @@ const Portfolios = () => {
     
   }, [data]); // Runs when fetched_data changes
 
+  //fetch the closing prices this month for the portfolio
+  useEffect(() => {
+    
+    axios.get(`http://localhost:5000/closing/this-month?portfolio_name=${selectedPortfolio}`)
+      .then((response) => {
+        setThisMonthData(response.data); 
+      })
+      .catch((error) => {
+        console.error("Error fetching portfolios:", error);
+      });
+  }, []);
+
 
   //calculating the portfolios performance
   function CalculatePerformance(data : PortfolioData[], prices: PortfolioData[]) {
@@ -330,6 +343,8 @@ const Portfolios = () => {
     return () => controls.stop()
 }, [total_value,portfolioData])
 
+
+  console.log(thisMonthData)
   return (
     <div>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
