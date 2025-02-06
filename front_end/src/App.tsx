@@ -24,10 +24,13 @@ const App = () => {
     <main className='flex h-screen' style={{ backgroundColor: '#141b2d' }}>
       
       
+      
 
-      <HomeSidebar/>  
+      <HomeSidebar/>
+      
        
-      <div style={{ flex: 1, padding: '20px' }}>
+       
+      <div style={{ flex: 1, padding: '20px', overflow:'auto' }}>
       <Routes>
         
         

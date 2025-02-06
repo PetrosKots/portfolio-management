@@ -1,3 +1,5 @@
+const path = require("path");
+const { spawn } = require("child_process");
 const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
@@ -23,14 +25,30 @@ db.connect((err) => {
   }
 });
 
-// API Endpoint to get data portfolio data
+// API Endpoint to fetch portfolio data
 app.get("/portfolios", (req, res) => {
   const { portfolio_name } = req.query;
 
   //if portfolio name is provided
   if (portfolio_name) {
     
-    const query = "SELECT investment_id,company_id,amount_invested,date FROM Portfolios p INNER JOIN Investments i ON p.portfolio_id=i.portfolio_id WHERE portfolio_name=?";
+    const query = `
+    SELECT investment_id, data.company_id AS Company, quantity, average_price, Amount, recent_price.closing_price AS "Last Closing"
+    FROM
+      (SELECT h1.company_id,h1.date,h1.closing_price
+      FROM Historical_data h1
+      INNER JOIN (
+          SELECT company_id,MAX(date) as max_date
+          FROM Historical_data
+          GROUP BY company_id
+          ) h2 ON h1.company_id=h2.company_id AND h1.date=h2.max_date) recent_price
+      INNER JOIN (
+        SELECT investment_id,company_id,quantity, average_price, amount_invested AS Amount 
+        FROM Portfolios p 
+        INNER JOIN Investments i ON p.portfolio_id=i.portfolio_id WHERE portfolio_name=?
+      ) data ON recent_price.company_id=data.company_id
+
+     `;
     db.query(query, [portfolio_name], (err, results) => {
       if (err) {
         res.status(500).json({ error: err.message });
@@ -95,11 +113,13 @@ app.post("/portfolios/investments", (req, res) => {
           portfolio_id,
           investment.company_id,
           investment.date,
-          parseFloat(investment.amount_invested)
+          parseFloat(investment.amount_invested),
+          parseFloat(investment.quantity),
+          parseFloat(investment.average_price)
         ]);
         //Insert multiple rows into the Investments table
         const query = `
-          INSERT INTO Investments (portfolio_id, company_id, date, amount_invested)
+          INSERT INTO Investments (portfolio_id, company_id, date, amount_invested, quantity, average_price)
           VALUES ?
         `;
 
@@ -119,7 +139,7 @@ app.post("/portfolios/investments", (req, res) => {
   );
 });
 
-//endpoint to remove investments
+//api endpoint to remove investments
 app.delete("/portfolios/investments", (req, res) => {
   const {investment_id}=req.query //getting the id of the investment to delete
   int_id=parseInt(investment_id, 10) //parsing it to int
@@ -137,11 +157,40 @@ app.delete("/portfolios/investments", (req, res) => {
     )
 });
 
+//endpoint to run python script that fetches the historical data and loads it to the database
+app.post("/run-python", (req, res) => {
+  const { companies, dates } = req.body; // Extract the company and date of investment arrays
+
+  if (!Array.isArray(companies) || !Array.isArray(dates)) {
+    return res.status(400).json({ error: "Invalid input format. Expected arrays." });
+  }
+
+  const scriptPath = path.join(__dirname, "../ETL/etl_data.py"); //path to the python file
+
+  // Spawn the Python script
+  const pythonProcess = spawn("python3", [scriptPath]); 
+
+  // Send JSON data as parameters to Python via stdin
+  pythonProcess.stdin.write(JSON.stringify({ companies, dates }));
+  pythonProcess.stdin.end();
+
+  
+
+  // Handle errors
+  pythonProcess.stderr.on("data", (data) => {
+    console.error(`Python Error: ${data.toString()}`);
+  });
+
+  // When Python script finishes, send response back to frontend
+  pythonProcess.on("close", (code) => {
+    res.json({ output: 'success', exitCode: code });
+  });
+});
+
 //endpoint to delete portfolio
 app.delete("/portfolios", (req, res) => {
+
   const {portfolio_name}=req.query //getting the portfolio name that needs to be deleted
-  
-  
   
   db.query(
 
@@ -193,7 +242,36 @@ app.delete("/portfolios", (req, res) => {
     )
 });
 
+//end point to fecth the last closing price of a ticker
 
+app.get("/last-closing", (req, res) => {
+  const {companies}=req.query;
+  
+
+  const companyIdsArray = companies.split(",").map(id => id.trim()); // Convert string to array
+  const placeholders = companyIdsArray.map(() => "?").join(",");
+
+  const query = `
+    SELECT h1.company_id AS Company, h1.closing_price
+    FROM Historical_data h1
+    JOIN (
+        SELECT company_id, MAX(date) AS latest_date
+        FROM Historical_data
+        WHERE company_id IN (${placeholders})
+        GROUP BY company_id
+    ) h2 ON h1.company_id = h2.company_id AND h1.date = h2.latest_date
+  `;
+
+  db.query(query, companyIdsArray, (err, results) => {
+    if (err) {
+      console.error("Database Error:", err.message);
+      return res.status(500).json({ error: err.message });
+    }
+
+    res.json(results); // Return an array of results
+  })
+
+});
 
 
 // Start the server

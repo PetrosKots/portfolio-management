@@ -31,6 +31,8 @@ try:
         "portfolio_id INT, "
         "company_id VARCHAR(10), "
         "date DATE, "
+        "average_price FLOAT,"
+        "quantity FLOAT,"
         "amount_invested INT, "
         "FOREIGN KEY (portfolio_id) REFERENCES Portfolios(portfolio_id))"
         
@@ -38,7 +40,7 @@ try:
 
         Create_Historical_data = (
         "CREATE TABLE IF NOT EXISTS Historical_data ("
-        "data_id INT AUTO_INCREMENT PRIMARY KEY, "
+        "data_id VARCHAR(255) PRIMARY KEY, "
         "company_id VARCHAR(10), "
         "date DATE, "
         "closing_price FLOAT, " 
