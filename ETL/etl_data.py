@@ -45,7 +45,7 @@ def CreatePeriod(given_date):
         else:
             return('1mo')
   
-  
+ 
 #Function that fetches the historical data from yahoo finance 
 #for the given companies and the investment dates. Then it loads the data to the database.
 #It only stores the closing price of the ticker for a given period.
@@ -72,7 +72,7 @@ def GetAndLoadHistoricalData(companies,dates):
 
         #creating a list of items like "AMZN-2024-01-31, AMZN , 2024-01-31, closing price"
         #the data_id "AMZN-2024-01-31" is used to avoid saving duplicate rows
-        mylist=[ (row['Company'] + '-' + str(index), row['Company'], index, price,) for index,price in zip(hist_data['Close'].index, hist_data['Close'].values) ]
+        mylist=[ (row['Company'] + '-' + str(index), row['Company'], index.strftime('%Y-%m-%d'), price,) for index,price in zip(hist_data['Close'].index, hist_data['Close'].values) ]
         
         with conn.cursor() as cursor:
 
@@ -86,18 +86,43 @@ def GetAndLoadHistoricalData(companies,dates):
             
             conn.commit()
 
+#inserting the company data into the database.Using Ignore to avoid duplicates
+def GetAndLoadMostRecentData():
+
+    with conn.cursor() as cursor:
+
+        # get all the companies in from all the portfolios
+        cursor.execute("SELECT company_id FROM Companies")
+        companies=cursor.fetchall()
+        
+        #for every company in the portfolio get the closing prices the last 30 days
+        for company in companies:
+
+            most_recent_data=yf.Ticker( company['company_id']).history( period='1mo' ) 
+            
+            #creating a list of items like "AMZN-2024-01-31, AMZN , 2024-01-31, closing price"
+            #the data_id "AMZN-2024-01-31" is used to avoid saving duplicate rows
+            mylist=[ (company['company_id'] + '-' + str(index), company['company_id'], index.strftime('%Y-%m-%d'), price,) for index,price in zip(most_recent_data['Close'].index, most_recent_data['Close'].values) ]
+            
+            #inserting the historical closing price of the company into the database.Using Ignore to avoid duplicates.
+            cursor.executemany("INSERT IGNORE INTO Historical_data (data_id,company_id,date,closing_price) VALUES (%s,%s, %s, %s) ",mylist)
+                
+            
+            conn.commit()
 if __name__ == "__main__":
 
     # Read JSON input from stdin
     input_data = sys.stdin.read()
-    data = json.loads(input_data)
 
-    # Extract arrays from JSON
-    companies = data["companies"]
-    dates = data["dates"]
-
+    if(input_data):
     # Call function with the received data
-    GetAndLoadHistoricalData(companies, dates)
+        data = json.loads(input_data)
+         # Extract arrays from JSON
+        companies = data["companies"]
+        dates = data["dates"]
+        GetAndLoadHistoricalData(companies, dates)
+    else:
+        GetAndLoadMostRecentData()
 
 
 

@@ -290,9 +290,7 @@
   }
 
   /* Bottom bar */
-  .bottom-bar {
-    @apply z-50 flex-between w-full sticky bottom-0 rounded-t-[20px] bg-dark-2 px-5 py-4 md:hidden;
-  }
+  
 
   /* File uploader */
   .file_uploader-img {

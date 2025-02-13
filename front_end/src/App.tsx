@@ -8,7 +8,7 @@ import Portfolios from './scenes/portfolios'
 import RootLayout from './scenes/RootLayout'
 import { Sidebar } from 'react-pro-sidebar';
 import { fetchUsers } from "./api";
-
+import axios from "axios";
 
 const App = () => {
   const [response, setResponse] = useState("");
@@ -18,6 +18,14 @@ const App = () => {
       .then((res) => setResponse(JSON.stringify(res.data, null, 2)))
       .catch((err) => setResponse(`Error: ${err.message}`));
   }, []);
+
+  //post request that fetches the latest closing prices for all the investment
+  useEffect(() =>{
+        
+  
+    axios.post(`http://localhost:5000/run-python`)
+
+  })
   return (
     
     

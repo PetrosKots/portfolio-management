@@ -161,30 +161,53 @@ app.delete("/portfolios/investments", (req, res) => {
 app.post("/run-python", (req, res) => {
   const { companies, dates } = req.body; // Extract the company and date of investment arrays
 
-  if (!Array.isArray(companies) || !Array.isArray(dates)) {
-    return res.status(400).json({ error: "Invalid input format. Expected arrays." });
-  }
-
-  const scriptPath = path.join(__dirname, "../ETL/etl_data.py"); //path to the python file
-
-  // Spawn the Python script
-  const pythonProcess = spawn("python3", [scriptPath]); 
-
-  // Send JSON data as parameters to Python via stdin
-  pythonProcess.stdin.write(JSON.stringify({ companies, dates }));
-  pythonProcess.stdin.end();
+  if( companies && dates){
 
   
+    if (!Array.isArray(companies) || !Array.isArray(dates)) {
+      return res.status(400).json({ error: "Invalid input format. Expected arrays." });
+    }
 
-  // Handle errors
-  pythonProcess.stderr.on("data", (data) => {
-    console.error(`Python Error: ${data.toString()}`);
-  });
+    const scriptPath = path.join(__dirname, "../ETL/etl_data.py"); //path to the python file
 
-  // When Python script finishes, send response back to frontend
-  pythonProcess.on("close", (code) => {
-    res.json({ output: 'success', exitCode: code });
-  });
+    // Spawn the Python script
+    const pythonProcess = spawn("python3", [scriptPath]); 
+
+    // Send JSON data as parameters to Python via stdin
+    pythonProcess.stdin.write(JSON.stringify({ companies, dates }));
+    pythonProcess.stdin.end();
+
+    
+
+    // Handle errors
+    pythonProcess.stderr.on("data", (data) => {
+      console.error(`Python Error: ${data.toString()}`);
+    });
+
+    // When Python script finishes, send response back to frontend
+    pythonProcess.on("close", (code) => {
+      res.json({ output: 'success', exitCode: code });
+    });
+  
+    }
+  else{
+
+    const scriptPath = path.join(__dirname, "../ETL/etl_data.py"); //path to the python file
+
+    // Spawn the Python script
+    const pythonProcess = spawn("python3", [scriptPath]); 
+
+    pythonProcess.stderr.on("data", (data) => {
+      console.error(`Python Error: ${data.toString()}`);
+    });
+    
+    pythonProcess.stdout.on('data', data => {
+      console.log(`stdout:\n${data}`);
+    })
+
+    pythonProcess.stdin.end();
+
+  }
 });
 
 //endpoint to delete portfolio
@@ -298,14 +321,14 @@ app.get("/closing/this-month", (req, res) => {
         FROM Investments i
         INNER JOIN
         (
-          SELECT h1.company_id,date,closing_price
+          SELECT h1.company_id,portfolio_id,date,closing_price
           FROM(
             SELECT company_id,date,closing_price
             FROM Historical_data
             WHERE date>?) h1 
-            INNER JOIN (SELECT company_id FROM Investments WHERE portfolio_id=?  ) h2
+            INNER JOIN (SELECT company_id,portfolio_id FROM Investments WHERE portfolio_id=?  ) h2
             ON h1.company_id=h2.company_id
-        ) h3 ON i.company_id=h3.company_id 
+        ) h3 ON i.company_id=h3.company_id AND i.portfolio_id=h3.portfolio_id
             `;
       
         db.query(query, [first_of_this_month,portfolio_id], (err, insertResults) => {

@@ -120,7 +120,7 @@ const TickerPopup: React.FC<PopupProps> = ({ open, onClose, selectedPortfolio })
   
         //send API request to run the script that will fetch the historical data for the selected investments and selected dates
         axios.post(`http://localhost:5000/run-python`, {companies:companies,dates:dates})
-
+        
         // Send the entire array of investments to the API
         const post_response=await axios.post(
           `http://localhost:5000/portfolios/investments?portfolio_name=${selectedPortfolio}`, // endpoint
@@ -226,6 +226,8 @@ const DetailsDialog: React.FC<DetailsDialogProps> = ({ open, onClose, ticker, in
       
       setDetailsList([...detailsList, { quantity, avgPrice, amount, date: date.format("YYYY-MM-DD") }]);; // Add to list
       setAmount(""); // Clear input
+      setAvgPrice("")
+      setQuantity("")
       setDate(dayjs());
       
     }

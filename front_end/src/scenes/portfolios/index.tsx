@@ -2,6 +2,7 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
+import { groupBy } from 'lodash';
 import Dropdown from 'react-bootstrap/Dropdown'
 import DropdownButton from 'react-bootstrap/DropdownButton'
 import { Box, Typography } from '@mui/material';
@@ -18,11 +19,12 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import {Alert, Snackbar} from '@mui/material';
 import { ResponsivePie } from '@nivo/pie'
-import { useMemo } from "react";
+import { TrendingUp } from "lucide-react"
 import * as motion from "motion/react-client"
 import { animate, useMotionValue, useTransform } from "motion/react"
 import  "../../globals.css"
-
+import { CartesianGrid, Line, LineChart, XAxis,YAxis } from "recharts"
+import {ChartConfig,ChartContainer,ChartTooltip,ChartTooltipContent,} from "@/components/ui/chart"
 
 // Define PortfolioData type to be flexible
 interface PortfolioData {
@@ -36,6 +38,25 @@ type PieChartData = {
 };
 
 const Portfolios = () => {
+  const chartConfig = {
+    desktop: {
+      label: "Desktop",
+      color: "hsl(var(--chart-1))",
+    },
+    mobile: {
+      label: "Mobile",
+      color: "hsl(var(--chart-2))",
+    },
+  } satisfies ChartConfig
+
+  const chartData = [
+    { month: "January", desktop: 186, mobile: 80 },
+    { month: "February", desktop: 305, mobile: 200 },
+    { month: "March", desktop: 237, mobile: 120 },
+    { month: "April", desktop: 73, mobile: 190 },
+    { month: "May", desktop: 209, mobile: 130 },
+    { month: "June", desktop: 214, mobile: 140 },
+  ]
 
   //style of the animation box
   const box = {
@@ -78,7 +99,8 @@ const Portfolios = () => {
   useEffect(() => {
     // Fetch portfolio data if a portfolio is selected
 
-    if (selectedPortfolio) {
+    if (selectedPortfolio!="Select Portfolio") {
+      
       axios.get<PortfolioData[]>(`http://localhost:5000/portfolios?portfolio_name=${selectedPortfolio}`)
         .then(response => {
           if (response.data.length > 0) {
@@ -281,15 +303,18 @@ const Portfolios = () => {
 
   //fetch the closing prices this month for the portfolio
   useEffect(() => {
-    
-    axios.get(`http://localhost:5000/closing/this-month?portfolio_name=${selectedPortfolio}`)
+    if(selectedPortfolio!="Select Portfolio"){
+      axios.get(`http://localhost:5000/closing/this-month?portfolio_name=${selectedPortfolio}`)
       .then((response) => {
         setThisMonthData(response.data); 
       })
       .catch((error) => {
         console.error("Error fetching portfolios:", error);
       });
-  }, []);
+  }
+
+    }
+    , [portfolioData]);
 
 
   //calculating the portfolios performance
@@ -342,9 +367,27 @@ const Portfolios = () => {
     const controls = animate(count, total_value, { duration: 3 })
     return () => controls.stop()
 }, [total_value,portfolioData])
+   
+
+function transformDataForLineChart(data: PortfolioData[]) {
+    const groupedByDate=groupBy(data,'date')
+    console.log(groupedByDate)
+    const portfolioValueEachDay = Object.entries(groupedByDate).map(([date, group]) => {
+
+      // Perform calculations within each date group
+      const totalValue = group.reduce((sum, entry) => sum + (entry.quantity*entry.closing_price), 0);
+      
+      return { date, totalValue }; // Return an object with date and totalValue
+  });
+    return portfolioValueEachDay
+}
+
+ 
+  
+  
 
 
-  console.log(thisMonthData)
+  
   return (
     <div>
       <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
@@ -408,8 +451,8 @@ const Portfolios = () => {
         <DataGrid
           rows={portfolioData}
           columns={columns}
-          pageSizeOptions={[5]}
-          checkboxSelection
+          pageSizeOptions={[10]}
+          checkboxSelection       
           disableRowSelectionOnClick
           slots={{ toolbar: EditToolbar }}
           onRowSelectionModelChange={(newSelectionModel) => setSelectedRows(newSelectionModel as number[])} 
@@ -453,7 +496,7 @@ const Portfolios = () => {
                 className={percentage_increase > 0 ? 'text-green' : 'text-red'} 
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginTop: '10px' }}
               > 
-                {percentage_increase.toFixed(2) + "%"}
+                {percentage_increase.toFixed(2) + "%"}<TrendingUp className="h-4 w-4" />
                 <div className='portfolio-value-box-text'>since inception</div>
               </div>
                 
@@ -538,8 +581,52 @@ const Portfolios = () => {
                 ease: "easeOut",
             }}
             >
+              <div className='h1-bold' >Portfolio Value This Month</div>
+            <ChartContainer config={chartConfig} style={{ width: "100%", maxWidth: "100%" }}>
+              <LineChart
+                accessibilityLayer
+                data={transformDataForLineChart(thisMonthData)}
+                margin={{
+                  left: 20,
+                  right: 12,
+                  top: 60
+                }}
+              >
+                <CartesianGrid vertical={false} />
+                <XAxis
+                  dataKey="date"
+                  
+                  tick={true}
+                  axisLine={false}
+                  tickMargin={8}
+                  tickFormatter={(value) => value.slice(5, 10)}
+                />
+                <YAxis 
+                  dataKey="totalValue" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  domain={['dataMin', 'auto']} 
+                />
 
-          
+                <ChartTooltip
+                  cursor={true}
+                  content={<ChartTooltipContent hideLabel />}
+                />
+                <Line
+                  dataKey="totalValue"
+                  type="natural"
+                  stroke="var(--color-desktop)"
+                  strokeWidth={2}
+                  dot={{
+                    fill: "var(--color-desktop)",
+                  }}
+                  activeDot={{
+                    r: 6,
+                  }}
+                />
+              </LineChart>
+            </ChartContainer>
+
             </motion.div>
             
 
@@ -558,7 +645,7 @@ const Portfolios = () => {
                 ease: "easeOut",
             }}
             >
-
+              
           
             </motion.div>
 
