@@ -60,7 +60,7 @@ try:
     # Commit changes
     conn.commit()
 
-    print("Record inserted successfully")
+    print("Database Created successfully")
 finally:
     conn.close()
 
