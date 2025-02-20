@@ -5,6 +5,7 @@ import './globals.css'
 import HomeSidebar from '@/components/ui/sidebar';
 import { Home } from './scenes/home'
 import Portfolios from './scenes/portfolios'
+import Charts from './scenes/charts';
 import RootLayout from './scenes/RootLayout'
 import { Sidebar } from 'react-pro-sidebar';
 import { fetchUsers } from "./api";
@@ -50,7 +51,7 @@ const App = () => {
           <Route path='/home' element={<Home />}/>
           <Route path='/dashboard' element={<Home />}/>
           <Route path='/portfolios' element={<Portfolios />}/>
-          <Route path='/charts' element={<Home />}/>
+          <Route path='/charts' element={<Charts />}/>
           <Route path='/dividends' element={<Home />}/>
           <Route path='/investments' element={<Home />}/>
           <Route path='/risk' element={<Home />}/>

@@ -49,14 +49,6 @@ const Portfolios = () => {
     },
   } satisfies ChartConfig
 
-  const chartData = [
-    { month: "January", desktop: 186, mobile: 80 },
-    { month: "February", desktop: 305, mobile: 200 },
-    { month: "March", desktop: 237, mobile: 120 },
-    { month: "April", desktop: 73, mobile: 190 },
-    { month: "May", desktop: 209, mobile: 130 },
-    { month: "June", desktop: 214, mobile: 140 },
-  ]
 
   //style of the animation box
   const box = {
@@ -370,8 +362,15 @@ const Portfolios = () => {
    
 
 function transformDataForLineChart(data: PortfolioData[]) {
-    const groupedByDate=groupBy(data,'date')
-    console.log(groupedByDate)
+    //using that groupedByDate, the line chart displays only the days that have data for all
+    // the tickers.The problem is that for days that the american stock market is closed for holidays
+    //but the European is open, the api returns data only for the european tickers, so the total value
+    //is wrong as it only calculates the returned values
+    //could either completely remove european stock or find another way to prevent it
+    const groupedByDate=Object.fromEntries( Object.entries(groupBy(data,'date')).filter( ([date, companies]) => companies.length==portfolioData.length ) )
+    
+    //const groupedByDate=groupBy(data,'date')
+    
     const portfolioValueEachDay = Object.entries(groupedByDate).map(([date, group]) => {
 
       // Perform calculations within each date group
