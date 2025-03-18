@@ -359,6 +359,54 @@ app.get("/closing/this-month", (req, res) => {
 
 });
 
+
+//api endpoint to get the historical data of a portfolios investments since the date of first investment 
+
+app.get("/chart-data", (req, res) =>{
+
+  const {portfolio_name}=req.query
+
+  db.query(
+    "SELECT portfolio_id FROM Portfolios WHERE portfolio_name=?",
+    [portfolio_name],
+    (err, results) => {
+      if (err) {
+        return res.status(500).json({ error: err.message });
+      }
+      
+      // If portfolio exists, proceed with inserting multiple investments
+      if (results.length > 0) {
+        const portfolio_id = results[0].portfolio_id;
+        
+        const query=`
+        SELECT T2.company_id,T2.date,average_price,quantity,amount_invested,closing_price
+        FROM 
+          (
+          SELECT company_id,date,average_price,quantity,amount_invested
+          FROM Investments WHERE portfolio_id=?
+          ) T1 INNER JOIN Historical_data T2 ON T1.company_id=T2.company_id
+        WHERE T2.date>=T1.date
+
+        `;
+      
+        db.query(query, [portfolio_id], (err, insertResults) => {
+          if (err) {
+            return res.status(500).json({ error: err.message });
+          } else {
+            // Respond with the number of inserted rows
+            res.json(insertResults);
+          }
+        });
+      } else {
+        // If no portfolio found, send a 404 error
+        res.status(404).json({ error: "Portfolio not found" });
+      }
+    }
+  );
+
+});
+
+
 // Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

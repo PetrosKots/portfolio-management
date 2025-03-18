@@ -20,3 +20,6 @@
 
 8) Fix the code so that the gridbox at /Portfolios updates when it loads for the first time a different day.
     -At the moment it displays the data that were fetched a different day and not the latest data.After you reload the page, the latest data are displayed
+
+9) Amend the code so that the user cannot create portfolios with the same name
+
