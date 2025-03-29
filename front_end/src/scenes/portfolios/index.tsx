@@ -88,6 +88,7 @@ const Portfolios = () => {
       });
   }, []);
 
+  //fetching the portfolio data and creating the datagrid columns 
   useEffect(() => {
     // Fetch portfolio data if a portfolio is selected
 
@@ -101,7 +102,7 @@ const Portfolios = () => {
             // Dynamically creating new columns for the data grid table based on
             // the number of columns returned by the API response
             const newColumns: GridColDef[] = Object.keys(firstRow)
-            .filter((key) => key !== "investment_id") // Exclude the ID column
+            .filter((key) => key !== "investment_id" && key!== "Last_Closing_USD") // Exclude the ID column
             .map((key) => ({
               field: key,
               headerName: key.replace(/_/g, " ").toUpperCase(),
@@ -125,7 +126,7 @@ const Portfolios = () => {
             const updatedData: PortfolioData[] = response.data.map((row, index) => ({
               id: row.investment_id,
               ...row,
-              performance:(( (row["Last Closing"]-row.average_price)/row.average_price)*100).toFixed(1) +"%"
+              performance:(( (row[`Last_Closing`]-row.average_price)/row.average_price)*100).toFixed(1) +"%"
             }));
             setData(response.data)
             
@@ -154,25 +155,25 @@ const Portfolios = () => {
 
   // Handle row deletion
   const handleDelete = async () => {
-    // Step 1: Retrieve the selected rows
+    // Retrieve the selected rows
     const rowsToDelete = portfolioData.filter((row) =>
       selectedRows.includes(row.id),
     );
 
-    // Step 2: Call API to delete rows from the database
+    //Call API to delete rows from the database
     try {
       const deletePromises = rowsToDelete.map(row =>
         axios.delete(`http://localhost:5000/portfolios/investments?investment_id=${row.investment_id}}`, {
           data: { ...row } // Pass the row data to delete
         }))
 
-      // Step 3: Remove deleted rows from the DataGrid
+      //Remove deleted rows from the DataGrid
       setPortfolioData((prevData) => prevData.filter((row) => !selectedRows.includes(row.id)));
 
-      // Step 4: Clear the selected rows state
+      //Clear the selected rows state
       setSelectedRows([]); // Clear selection after deleting
       }
-      // You can display a success message if needed
+      
     catch (error) {
       console.error("Error deleting rows:", error);
     } 
@@ -247,18 +248,18 @@ const Portfolios = () => {
   function transformDataForPieChart(data: PortfolioData[]): PieChartData[] {
     
     // Calculate total value of all items
-    const total_value = data.reduce((sum, item) => sum + item.Amount, 0);
+    const total_value = data.reduce((sum, item) => sum + item.Amount_Invested, 0);
     
     // Group items by company_id and sum their values
     const groupedData = data.reduce((acc, item) => {
       // If the company_id already exists in the accumulator, sum the value
       if (acc[item.Company]) {
-        acc[item.Company].value += (item.Amount / total_value) * 100;
+        acc[item.Company].value += (item.Amount_Invested / total_value) * 100;
       } else {
         // Otherwise, add a new entry with the current item
         acc[item.Company] = {
           id: item.Company,
-          value: (item.Amount / total_value) * 100,
+          value: (item.Amount_Invested / total_value) * 100,
           label: item.Company,
         };
       }
@@ -316,14 +317,14 @@ const Portfolios = () => {
     if(prices){
 
       //calculating the total amount invested
-      const totalInvested = data.reduce((sum, item) => sum + item.Amount, 0)
+      const totalInvested = data.reduce((sum, item) => sum + item.Amount_Invested, 0)
 
       //constructing an array of items like [ {company: "APPL",value: "1000"} ]
       //that represents the actual value of each investment by multiplying the quantity of stocks with the latest closing price
       const values = data.map(item => {
 
         const priceEntry = prices.find(price => price.Company===item.Company)
-        const closingPrice = priceEntry ? priceEntry.closing_price : 0;
+        const closingPrice = priceEntry ? priceEntry.Last_Closing_USD : 0;
   
         return {
           company: item.Company,
@@ -341,7 +342,7 @@ const Portfolios = () => {
     
     else{
       
-      const total_value=data.reduce((sum, item) => sum + item.Amount, 0)
+      const total_value=data.reduce((sum, item) => sum + item.Amount_Invested, 0)
       const percentage_increase=0
 
       return{total_value,percentage_increase}
@@ -369,7 +370,7 @@ function transformDataForLineChart(data: PortfolioData[]) {
     //could either completely remove european stock or find another way to prevent it
     const groupedByDate=Object.fromEntries( Object.entries(groupBy(data,'date')).filter( ([date, companies]) => companies.length==portfolioData.length ) )
     
-    //const groupedByDate=groupBy(data,'date')
+    
     
     const portfolioValueEachDay = Object.entries(groupedByDate).map(([date, group]) => {
 
@@ -384,7 +385,7 @@ function transformDataForLineChart(data: PortfolioData[]) {
  
   
   
-
+  
 
   
   return (

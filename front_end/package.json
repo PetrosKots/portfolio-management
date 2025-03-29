@@ -23,6 +23,7 @@
     "@mui/x-charts": "^7.24.1",
     "@mui/x-data-grid": "^7.24.0",
     "@mui/x-date-pickers": "^7.24.1",
+    "@nivo/calendar": "^0.88.0",
     "@nivo/heatmap": "^0.88.0",
     "@nivo/pie": "^0.88.0",
     "@radix-ui/react-slot": "^1.1.1",

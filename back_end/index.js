@@ -9,6 +9,25 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
+
+
+let USDToEURRate=null;
+// Make a GET request
+async function getExchangeRates() {
+  try {
+    const response = await fetch('https://api.exchangeratesapi.io/v1/latest?access_key=33687c97909486ac7e4042ddc6156ce1');
+    const data = await response.json();
+    USDToEURRate = data.rates.USD
+    //return(data.rates.USD); //return the EUR to USD price
+  } catch (error) {
+    return 0;
+  }
+}
+
+getExchangeRates()
+
+setInterval(getExchangeRates,24*60*60*1000)
+
 // Connect to MySQL
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
@@ -26,14 +45,21 @@ db.connect((err) => {
 });
 
 // API Endpoint to fetch portfolio data
-app.get("/portfolios", (req, res) => {
+app.get("/portfolios", async (req, res) => {
+
+  
+  if(USDToEURRate === null){
+    USDToEURRate=1
+  }
   const { portfolio_name } = req.query;
 
   //if portfolio name is provided
   if (portfolio_name) {
     
     const query = `
-    SELECT investment_id, data.company_id AS Company, quantity, average_price, Amount, recent_price.closing_price AS "Last Closing"
+    SELECT investment_id, data.company_id AS Company, quantity, average_price, recent_price.closing_price AS Last_Closing,
+      CASE WHEN data.company_id != 'VUAA.MI' THEN Amount ELSE Amount*${USDToEURRate} END AS Amount_Invested,
+      CASE WHEN data.company_id != 'VUAA.MI' THEN recent_price.closing_price ELSE recent_price.closing_price*${USDToEURRate} END AS Last_Closing_USD
     FROM
       (SELECT h1.company_id,h1.date,h1.closing_price
       FROM Historical_data h1
@@ -45,7 +71,11 @@ app.get("/portfolios", (req, res) => {
       INNER JOIN (
         SELECT investment_id,company_id,quantity, average_price, amount_invested AS Amount 
         FROM Portfolios p 
-        INNER JOIN Investments i ON p.portfolio_id=i.portfolio_id WHERE portfolio_name=?
+        INNER JOIN (
+          SELECT MAX(investment_id) AS investment_id,portfolio_id,company_id, CAST(SUM(average_price * quantity) / SUM(quantity) AS DECIMAL(5,2)) AS average_price ,SUM(amount_invested) AS amount_invested,SUM(quantity) AS quantity
+          FROM Investments
+          GROUP BY portfolio_id,company_id
+          ) i ON p.portfolio_id=i.portfolio_id WHERE portfolio_name=?
       ) data ON recent_price.company_id=data.company_id
 
      `;
@@ -268,6 +298,10 @@ app.delete("/portfolios", (req, res) => {
 //endpoint to fecth the last closing price of a ticker
 
 app.get("/last-closing", (req, res) => {
+
+  if(USDToEURRate === null){
+    USDToEURRate=1
+  }
   const {companies}=req.query;
   
 
@@ -275,7 +309,8 @@ app.get("/last-closing", (req, res) => {
   const placeholders = companyIdsArray.map(() => "?").join(",");
 
   const query = `
-    SELECT h1.company_id AS Company, h1.closing_price
+    SELECT h1.company_id AS Company, h1.closing_price,
+      CASE WHEN h1.company_id != 'VUAA.MI' THEN h1.closing_price ELSE h1.closing_price*${USDToEURRate} END AS Last_Closing_USD
     FROM Historical_data h1
     JOIN (
         SELECT company_id, MAX(date) AS latest_date
@@ -317,7 +352,7 @@ app.get("/closing/this-month", (req, res) => {
         const portfolio_id = results[0].portfolio_id;
         
         const query=`
-        SELECT i.company_id,quantity,average_price,h3.date,closing_price
+        SELECT i.company_id,SUM(quantity) AS quantity,CAST(AVG(average_price) AS DECIMAL(5,2)) as average_price,h3.date,MAX(closing_price) as closing_price
         FROM Investments i
         INNER JOIN
         (
@@ -326,9 +361,10 @@ app.get("/closing/this-month", (req, res) => {
             SELECT company_id,date,closing_price
             FROM Historical_data
             WHERE date>?) h1 
-            INNER JOIN (SELECT company_id,portfolio_id FROM Investments WHERE portfolio_id=?  ) h2
+            INNER JOIN (SELECT DISTINCT company_id,portfolio_id FROM Investments WHERE portfolio_id=?  ) h2
             ON h1.company_id=h2.company_id
         ) h3 ON i.company_id=h3.company_id AND i.portfolio_id=h3.portfolio_id
+         GROUP BY i.company_id,h3.date
             `;
       
         db.query(query, [first_of_this_month,portfolio_id], (err, insertResults) => {
@@ -374,19 +410,19 @@ app.get("/chart-data", (req, res) =>{
         return res.status(500).json({ error: err.message });
       }
       
-      // If portfolio exists, proceed with inserting multiple investments
+      // If portfolio exists, 
       if (results.length > 0) {
         const portfolio_id = results[0].portfolio_id;
         
         const query=`
-        SELECT T2.company_id,T2.date,average_price,quantity,amount_invested,closing_price
+        SELECT T2.company_id,T2.date,T2.date=T1.date AS Is_Investment_date, average_price,quantity,amount_invested,closing_price
         FROM 
           (
-          SELECT company_id,date,average_price,quantity,amount_invested
-          FROM Investments WHERE portfolio_id=?
+          SELECT company_id,date, average_price,quantity,amount_invested
+          FROM Investments WHERE portfolio_id=? 
           ) T1 INNER JOIN Historical_data T2 ON T1.company_id=T2.company_id
         WHERE T2.date>=T1.date
-
+        
         `;
       
         db.query(query, [portfolio_id], (err, insertResults) => {

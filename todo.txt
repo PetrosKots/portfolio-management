@@ -1,16 +1,16 @@
-1) Create api endpoint to fetch the historical data for the tickers of a portfolio since the investment date of each tickers.
-    -It will be used for the charts.
+1)✅ Create api endpoint to fetch the historical data for the tickers of a portfolio since the investment date of each tickers.
+    -It will be used for the charts. 
 
-2) Adjust the code so that the datagrid at /Portfolios aggregates the data for different investments regarding the same ticker.
+2)✅ Adjust the code so that the datagrid at /Portfolios aggregates the data for different investments regarding the same ticker.
     -At the moment, if two different investments have been made at the same company, they are displayd as 2 seperate rows.
 
-3) Fix the functionality of the linechart at /Portfolios for the days that some stock markets might be closed
+3)✅ Fix the functionality of the linechart at /Portfolios for the days that some stock markets might be closed
     -At the moment if a stock market is closed and closing data are not available for that date, the linechart only sums the remaining investments.
 
 4) Fix the code so that the boxes at /Portfolios update when a ticker is added or removed without the need to reload the page for the changes to appear
     -At the moment when you remove a ticker, the total value doesn't update.
 
-5) Add to the fourth box at /Portfolios a linechart that displays the profits the last month
+5) Add to the fourth box at /Portfolios the daily profit/loss in dollars
     -At the moment is an empty boxe
 
 6) Possibly adjust the code on how the performance is calculated for the /Portfolios performance linechart and the 'performance since inception' box.
@@ -23,3 +23,9 @@
 
 9) Amend the code so that the user cannot create portfolios with the same name
 
+10)✅ Fix the code so that the \chart data returned from the API are grouped by company
+    -At the moment the API returns different rows is the portfolio has more that one investments on the same company
+
+11) Amend the code so that the user can remove a specific amount of stocks from the portfolio while keeping the same performance so far
+    -At the moment the user can remove the whole investment from the portfolio and the past performance changes like the investment never existed.
+12)Fix the functionality of linechart at /portfolios.Maybe change it to TWR over the last month

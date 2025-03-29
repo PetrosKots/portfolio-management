@@ -2,7 +2,7 @@ import pymysql
 import yfinance as yf
 import pandas as pd
 from datetime import date
-from datetime import datetime
+from datetime import datetime,timedelta
 import sys
 import json
 
@@ -69,10 +69,18 @@ def GetAndLoadHistoricalData(companies,dates):
         
         #get the historical data of the ticker for the desired period.Period accepts values like "1y" so we call the CreatePeriod function for the given date
         hist_data=yf.Ticker(row['Company']).history( period=CreatePeriod(row['Date']) )
+         
+        full_date_range = pd.date_range(start=hist_data.index.min(), end=hist_data.index.max(), freq='D')
+
+        # Reindex and forward-fill missing values
+        hist_data = hist_data.reindex(full_date_range).ffill()
 
         #creating a list of items like "AMZN-2024-01-31, AMZN , 2024-01-31, closing price"
         #the data_id "AMZN-2024-01-31" is used to avoid saving duplicate rows
         mylist=[ (row['Company'] + '-' + str(index), row['Company'], index.strftime('%Y-%m-%d'), price,) for index,price in zip(hist_data['Close'].index, hist_data['Close'].values) ]
+  
+        
+
         
         with conn.cursor() as cursor:
 
@@ -99,7 +107,13 @@ def GetAndLoadMostRecentData():
         for company in companies:
 
             most_recent_data=yf.Ticker( company['company_id']).history( period='1mo' ) 
-            
+
+            #Create a full date range for between the dates of the historical data as the api dont include weekends and holidays
+            full_date_range = pd.date_range(start=most_recent_data.index.min(), end=most_recent_data.index.max(), freq='D') 
+
+            # Reindex and forward-fill missing values
+            most_recent_data = most_recent_data.reindex(full_date_range).ffill()
+
             #creating a list of items like "AMZN-2024-01-31, AMZN , 2024-01-31, closing price"
             #the data_id "AMZN-2024-01-31" is used to avoid saving duplicate rows
             mylist=[ (company['company_id'] + '-' + str(index), company['company_id'], index.strftime('%Y-%m-%d'), price,) for index,price in zip(most_recent_data['Close'].index, most_recent_data['Close'].values) ]
