@@ -1,9 +1,10 @@
-import React, { useState, useContext } from 'react';
+import React, { useState, useEffect } from 'react';
+import Popup from './create_portfolio_popup';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faGithub } from '@fortawesome/free-brands-svg-icons';
-import { Sidebar, Menu, MenuItem, sidebarClasses } from 'react-pro-sidebar';
+import { Sidebar, Menu, MenuItem, sidebarClasses, SubMenu } from 'react-pro-sidebar';
 import { Link } from 'react-router-dom';
-import { Box, IconButton, Typography, useTheme } from '@mui/material';
+import { Box, IconButton, Typography } from '@mui/material';
 import MenuOutlinedIcon from '@mui/icons-material/MenuOutlined';
 import HomeOutlinedIcon from '@mui/icons-material/HomeOutlined';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
@@ -12,10 +13,13 @@ import ShowChartOutlinedIcon from '@mui/icons-material/ShowChartOutlined';
 import WarningAmberOutlinedIcon from '@mui/icons-material/WarningAmberOutlined';
 import FactoryOutlinedIcon from '@mui/icons-material/FactoryOutlined';
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
+import AddIcon from '@mui/icons-material/Add';
+import axios from "axios";
 
 const HomeSidebar: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
-  const theme = useTheme(); // Access the current theme
+  const [openPortfolioPopup, setOpenPortfolioPopup] = useState(false);
+  const [portfolios, setPortfolios]= useState([])
   const colors = {
     primary: '#1F2A40',
     secondary: '#e0e0e0',
@@ -23,6 +27,17 @@ const HomeSidebar: React.FC = () => {
     neutralLight: '#e0e0e0',
     neutralMain: '#666666',
   };
+
+  useEffect(() => {
+    // Fetch the list of portfolios
+    axios.get("http://localhost:5000/portfolios")
+      .then((response) => {
+        setPortfolios(response.data); // Assuming response.data is an array of portfolio names
+      })
+      .catch((error) => {
+        console.error("Error fetching portfolios:", error);
+      });
+  }, []);
 
   return (
     <div style={{ display: 'flex', height: '100vh' }}>
@@ -71,20 +86,40 @@ const HomeSidebar: React.FC = () => {
 
           {/* Menu Items */}
           <MenuItem
-            component={<Link to="/dashboard" />}
-            
+            key={"dashboard"}
+            component={<Link to="/dashboard" />}  
             icon={<HomeOutlinedIcon style={{ color: colors.secondary }} />}
             style={{ color: colors.neutralLight }}
           >
             Dashboard
           </MenuItem>
-          <MenuItem
-            component={<Link to="/portfolios" />}
+          <SubMenu
+            key={"portfolios"}
             icon={<AccountBalanceWalletOutlinedIcon style={{ color: colors.secondary }} />}
             style={{ color: colors.neutralLight }}
+            label="Portfolios"
           >
-            Portfolios
-          </MenuItem>
+
+             {portfolios.map((portfolio) => (
+             <MenuItem
+              key={portfolio}
+              component={<Link to={`/portfolios?portfolio_name=${portfolio}`} />}
+              icon={<span style={{ width: "24px", display: "inline-block" }}></span>}
+              style={{ color: colors.neutralLight, background: colors.primary }}
+             >
+             {portfolio}
+             </MenuItem>
+             ))}
+             
+             <MenuItem
+              key={"create portfolio"}
+              style={{ color: colors.neutralLight , background: colors.primary}}
+              icon={<AddIcon style={{ color: colors.secondary }} />}
+              onClick={() => setOpenPortfolioPopup(true)}
+             >
+              Create Portfolio
+             </MenuItem>
+          </SubMenu>
           
           {!isCollapsed && (
             <Typography
@@ -93,15 +128,28 @@ const HomeSidebar: React.FC = () => {
             sx={{ m: '15px 0 5px 20px' }}
           >Performance</Typography>
           )}
-          <MenuItem
-            component={<Link to="/charts" />}
+
+          <SubMenu
+            key={"charts"}
             icon={<ShowChartOutlinedIcon style={{ color: colors.secondary }} />}
             style={{ color: colors.neutralLight }}
+            label="Charts"
           >
-            Charts
-          </MenuItem>
+            
+             {portfolios.map((portfolio) => (
+             <MenuItem
+              key={portfolio}
+              component={<Link to={`/charts?portfolio_name=${portfolio}`} />}
+              icon={<span style={{ width: "24px", display: "inline-block" }}></span>}
+              style={{ color: colors.neutralLight, background: colors.primary }}
+             >
+             {portfolio}
+             </MenuItem>
+             ))}
+          </SubMenu>
           
           <MenuItem
+            key={"dividends"}
             component={<Link to="/dividends" />}
             icon={<PaymentsOutlinedIcon style={{ color: colors.secondary }} />}
             style={{ color: colors.neutralLight }}
@@ -122,6 +170,7 @@ const HomeSidebar: React.FC = () => {
           )}
           
           <MenuItem
+            key={"investments"}
             component={<Link to="/investments" />}
             icon={<AttachMoneyOutlinedIcon style={{ color: colors.secondary }} />}
             style={{ color: colors.neutralLight }}
@@ -130,6 +179,7 @@ const HomeSidebar: React.FC = () => {
           </MenuItem>
 
           <MenuItem
+            key={"risk"}
             component={<Link to="/risk" />}
             icon={<WarningAmberOutlinedIcon style={{ color: colors.secondary }} />}
             style={{ color: colors.neutralLight }}
@@ -138,12 +188,14 @@ const HomeSidebar: React.FC = () => {
           </MenuItem>
 
           <MenuItem
+            key={"industries"}
             component={<Link to="/industries" />}
             icon={<FactoryOutlinedIcon style={{ color: colors.secondary }} />}
             style={{ color: colors.neutralLight }}
           >
             Industries
           </MenuItem>
+         
           
         </Menu>
         {!isCollapsed && (
@@ -153,6 +205,7 @@ const HomeSidebar: React.FC = () => {
 
         )}
       </Sidebar>
+      <Popup open={openPortfolioPopup} onClose={() => setOpenPortfolioPopup(false)} />
     </div>
   );
 };

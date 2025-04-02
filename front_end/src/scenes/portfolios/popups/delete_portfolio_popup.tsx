@@ -1,14 +1,13 @@
-import React, { useState,useEffect } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box } from "@mui/material";
-import Textarea from '@mui/joy/Textarea';
+import React from "react";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
 import axios from "axios";
-import { useSearchParams, useNavigate } from "react-router-dom";
-import {Alert, Snackbar} from '@mui/material';
+import { useNavigate } from "react-router-dom";
+
 
 interface PopupProps {
   open: boolean;
   onClose: () => void; 
-  selectedPortfolio: string;
+  selectedPortfolio: string | null ;
   
 }
 
@@ -28,7 +27,7 @@ const DeletePortfolioPopup: React.FC<PopupProps> = ({ open, onClose, selectedPor
     
         if (response.status==200) {
             handleClose()
-            navigate(`/portfolios?portfolio_name=${selectedPortfolio}`, { replace: true });
+            navigate(`/`, { replace: true });
             window.location.reload();
         }
     }

@@ -3,21 +3,19 @@ import React, { useState, useEffect } from 'react';
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
 import { groupBy } from 'lodash';
-import Dropdown from 'react-bootstrap/Dropdown'
-import DropdownButton from 'react-bootstrap/DropdownButton'
 import { Box, Typography } from '@mui/material';
 import { DataGrid, GridColDef, gridClasses, GridToolbarContainer, GridCellParams } from '@mui/x-data-grid';
 import { Button as BootstrapButton } from 'react-bootstrap';
 import { Button as MuiButton } from '@mui/material';
-import AddBoxOutlinedIcon from '@mui/icons-material/AddBoxOutlined';
 import AddIcon from '@mui/icons-material/Add';
-import Popup from "./popups/create_portfolio_popup";
 import TickerPopup from './popups/add_ticker_popup';
 import DeletePortfolioPopup from './popups/delete_portfolio_popup';
+import SellTickerPopup from './popups/sell_ticker_popup';
+import Menu from '@mui/material/Menu';
+import MenuItem from '@mui/material/MenuItem';
 import { IconButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
-import {Alert, Snackbar} from '@mui/material';
 import { ResponsivePie } from '@nivo/pie'
 import { TrendingUp } from "lucide-react"
 import * as motion from "motion/react-client"
@@ -25,6 +23,7 @@ import { animate, useMotionValue, useTransform } from "motion/react"
 import  "../../globals.css"
 import { CartesianGrid, Line, LineChart, XAxis,YAxis } from "recharts"
 import {ChartConfig,ChartContainer,ChartTooltip,ChartTooltipContent,} from "@/components/ui/chart"
+import MoreHorizIcon from '@mui/icons-material/MoreHoriz';
 
 // Define PortfolioData type to be flexible
 interface PortfolioData {
@@ -60,39 +59,27 @@ const Portfolios = () => {
   }
   
   const [searchParams] = useSearchParams(); // Get URL search parameters
-  const initialPortfolio = searchParams.get("portfolio_name") || "Select Portfolio"; // Get the portfolio name from URL
-                                                                                    // If there is no portfolio name, keep the initial value
-  const [portfolios, setPortfolios] = useState([]); // Portfolios list
-  const [selectedPortfolio, setSelectedPortfolio] = useState(initialPortfolio); // Selected portfolio
+  const selectedPortfolio = searchParams.get("portfolio_name"); // Selected portfolio
   const [portfolioData, setPortfolioData] = useState<PortfolioData[]>([]); // Data for DataGrid
   const [columns, setColumns] = useState<GridColDef[]>([]); // Dynamic columns for DataGrid
-  const [openPortfolioPopup, setOpenPortfolioPopup] = useState(false); // State to control popup
   const [openTickerPopup, setOpenTickerPopup] = useState(false); // State for Ticker Popup
   const [openDeleteTickerPopup, setOpenDeletePortfolioPopup] = useState(false); // State for Ticker Popup
-  const [alertOpen, setAlertOpen] = useState(false); //use state for the alert message
-  const [deleteAlertOpen, setDeleteAlertOpen] = useState(false); //use state for the alert message
   // Track selected rows for deletion
   const [selectedRows, setSelectedRows] = useState<number[]>([]); // Store selected rows for deletion
   const [data,setData]=useState<PortfolioData[]>([])
   const [closingPrices, setClosingPrices] = useState<any>(null);
   const [thisMonthData, setThisMonthData] = useState<any>(null);
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null); //HTML element used to capture the location of the click
+  const [selectedCompany, setSelectedCompany] = useState<string | null>(null); //id of the row that the editrow was clicked
+  const [openSellPopup, setSellPopup] = useState(false)
   
-  useEffect(() => {
-    // Fetch the list of portfolios
-    axios.get("http://localhost:5000/portfolios")
-      .then((response) => {
-        setPortfolios(response.data); // Assuming response.data is an array of portfolio names
-      })
-      .catch((error) => {
-        console.error("Error fetching portfolios:", error);
-      });
-  }, []);
+
 
   //fetching the portfolio data and creating the datagrid columns 
   useEffect(() => {
     // Fetch portfolio data if a portfolio is selected
 
-    if (selectedPortfolio!="Select Portfolio") {
+    if (selectedPortfolio) {
       
       axios.get<PortfolioData[]>(`http://localhost:5000/portfolios?portfolio_name=${selectedPortfolio}`)
         .then(response => {
@@ -117,7 +104,14 @@ const Portfolios = () => {
                   headerName: "PERFORMANCE", 
                   width: 150, 
                   editable: false
-              }]
+              },
+              {
+                field: "market_value", 
+                headerName: "MARKET VALUE", 
+                width: 150, 
+                editable: false
+            }
+            ]
             
             // concatenating the columns returned from the API call and the custom created columns
             const allColumns = [...newColumns, ...extraColumns];
@@ -126,7 +120,8 @@ const Portfolios = () => {
             const updatedData: PortfolioData[] = response.data.map((row, index) => ({
               id: row.investment_id,
               ...row,
-              performance:(( (row[`Last_Closing`]-row.average_price)/row.average_price)*100).toFixed(1) +"%"
+              performance:(( (row[`Last_Closing`]-row.average_price)/row.average_price)*100).toFixed(1) +"%",
+              market_value:(row[`Last_Closing`]*row.quantity)
             }));
             setData(response.data)
             
@@ -139,8 +134,8 @@ const Portfolios = () => {
             setPortfolioData([]);  
           }
         })
-        .catch(error => {
-          console.error("Error fetching portfolio data:", error);
+        .catch(()=> {
+          
           // Clear data in case of error
           setColumns([]);  
           setPortfolioData([]);  
@@ -153,6 +148,46 @@ const Portfolios = () => {
     }
   }, [selectedPortfolio]);
 
+  //function to handle the click of the edit row button
+  const handleEditRowClick = (event: React.MouseEvent<HTMLButtonElement>, company: string) => {
+    
+    setAnchorEl(event.currentTarget);
+    setSelectedCompany(company);
+  };
+
+  //function to close the editrow button
+  const handleEditRowClose = () => {
+    setAnchorEl(null);
+    setSelectedCompany(null);
+  };
+
+  const handleSellRowClick = () => {
+    setSellPopup(true)
+    setAnchorEl(null);
+    
+  }
+
+  // Function to render a button that is positioned as first column of the datagrid and will allow editing of the row
+  const EditRowButton = (params: any) => (
+    <>
+      <IconButton onClick={(event) => handleEditRowClick(event, params.row.Company)} size="small">
+        <MoreHorizIcon />
+      </IconButton>
+      <Menu
+        anchorEl={anchorEl}
+        open={Boolean(anchorEl) && selectedCompany === params.row.Company}
+        onClose={handleEditRowClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+      >
+        <MenuItem onClick={handleEditRowClose}>Edit</MenuItem>
+        <MenuItem onClick={handleSellRowClick}>Sell</MenuItem>
+        <MenuItem onClick={handleEditRowClose}>Delete</MenuItem>
+      </Menu>
+    </>
+  );
+
+  
   // Handle row deletion
   const handleDelete = async () => {
     // Retrieve the selected rows
@@ -182,26 +217,21 @@ const Portfolios = () => {
   //handle the delete portfolio button
   const handleDeletePortfolio = async () => {
 
-    if (selectedPortfolio !== "Select Portfolio"){
+    if (selectedPortfolio){
 
       setOpenDeletePortfolioPopup(true)
 
-    }else {
-      setDeleteAlertOpen(true); // otherwise display a warning that no portfolio has been selected
     }
-    
-    
+     
   };
 
 
   //handle the click of add ticker button
   const handleAddTicker = () => {
 
-    if (selectedPortfolio !== "Select Portfolio") { //if a portfolio has been selected
+    if (selectedPortfolio) { //if a portfolio has been selected
       setOpenTickerPopup(true); //open the popup to add the ticker info
 
-    } else {
-      setAlertOpen(true); // otherwise display a warning that no portfolio has been selected
     }
   };
 
@@ -226,18 +256,6 @@ const Portfolios = () => {
 
           {/* popup to add investment information about the selected ticker */}
         <TickerPopup open={openTickerPopup} onClose={() => setOpenTickerPopup(false)} selectedPortfolio={selectedPortfolio} />
-
-        {/* Alert if the user tries to add tickers without selecting a portfolio first */}
-        <Snackbar
-        open={alertOpen}
-        autoHideDuration={3000}
-        onClose={() => setAlertOpen(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        >
-        <Alert severity="warning" onClose={() => setAlertOpen(false)}>
-          Please select or create a portfolio before adding a ticker!
-        </Alert>
-        </Snackbar>
 
       </GridToolbarContainer>
     );
@@ -296,7 +314,7 @@ const Portfolios = () => {
 
   //fetch the closing prices this month for the portfolio
   useEffect(() => {
-    if(selectedPortfolio!="Select Portfolio"){
+    if(selectedPortfolio){
       axios.get(`http://localhost:5000/closing/this-month?portfolio_name=${selectedPortfolio}`)
       .then((response) => {
         setThisMonthData(response.data); 
@@ -385,51 +403,27 @@ function transformDataForLineChart(data: PortfolioData[]) {
  
   
   
-  
-
-  
   return (
+    
     <div>
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-
-        {/* Dropdown button to select portfolio */}
-        <DropdownButton id="dropdown-basic-button" title={selectedPortfolio} className='select-portfolio-dropdown'>
-          {portfolios.length > 0 ? (
-            portfolios.map((portfolio, index) => (
-              <Dropdown.Item key={index} onClick={() => setSelectedPortfolio(portfolio)}>{portfolio}</Dropdown.Item>
-            ))
-          ) : (
-            <Dropdown.Item disabled>Loading...</Dropdown.Item>
-          )}
-        </DropdownButton>
-          
-          {/* Button to create portfolio*/}
+      {selectedPortfolio && (
+       <div>
+          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
         <div className="d-flex gap-2">
-          <BootstrapButton variant="contained" size="sm" style={{ color: "white" }} onClick={() => setOpenPortfolioPopup(true)} >
-            <AddBoxOutlinedIcon sx={{ mr: 1 }} /> Create Portfolio
-          </BootstrapButton>
-
+          
           <BootstrapButton variant="contained" size="sm" style={{ color: "white" }} onClick={() => handleDeletePortfolio()} >
             <DeleteOutlinedIcon sx={{ mr: 1 }} /> Delete Portfolio
           </BootstrapButton>
-          <Snackbar
-          open={deleteAlertOpen}
-          autoHideDuration={3000}
-          onClose={() => setDeleteAlertOpen(false)}
-          anchorOrigin={{ vertical: "top", horizontal: "right" }}
-          >
-            <Alert severity="warning" onClose={() => setDeleteAlertOpen(false)}>
-              Please select or create a portfolio before deleting it!
-            </Alert>
-          </Snackbar>
-          <Popup open={openPortfolioPopup} onClose={() => setOpenPortfolioPopup(false)} />
+          
+          
           <DeletePortfolioPopup open={openDeleteTickerPopup} onClose={() => setOpenDeletePortfolioPopup(false)} selectedPortfolio={selectedPortfolio} />
+          <SellTickerPopup open={openSellPopup} onClose={() => setSellPopup(false)} company={selectedCompany} portfolio={selectedPortfolio}/>
         </div>
           
         
       </Box>
 
-          {/* MUI Datagrid component to display the investments of the selected portfolio */}
+      {/* MUI Datagrid component to display the investments of the selected portfolio */}
       <Box sx={{
         height: 400,
         width: '100%',
@@ -450,7 +444,18 @@ function transformDataForLineChart(data: PortfolioData[]) {
 
         <DataGrid
           rows={portfolioData}
-          columns={columns}
+          columns={
+            [
+              {
+                field: "actions",
+                headerName: "Actions",
+                width: 100,
+                sortable: false,
+                renderCell: EditRowButton, // This should be a function returning JSX
+              },
+              ...columns, // Spread the existing columns dynamically
+            ]
+          }
           pageSizeOptions={[10]}
           checkboxSelection       
           disableRowSelectionOnClick
@@ -465,7 +470,7 @@ function transformDataForLineChart(data: PortfolioData[]) {
         />
       </Box>
       
-      {selectedPortfolio!=="Select Portfolio" && (
+      {portfolioData.length>0 && (
           <div style={{ display: "flex", justifyContent:"space-between", flexWrap:'wrap' }}>
             
 
@@ -650,6 +655,9 @@ function transformDataForLineChart(data: PortfolioData[]) {
             </motion.div>
 
           </div>
+      )}
+
+       </div>
       )}
     </div>
   );

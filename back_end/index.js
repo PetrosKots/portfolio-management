@@ -69,10 +69,10 @@ app.get("/portfolios", async (req, res) => {
           GROUP BY company_id
           ) h2 ON h1.company_id=h2.company_id AND h1.date=h2.max_date) recent_price
       INNER JOIN (
-        SELECT investment_id,company_id,quantity, average_price, amount_invested AS Amount 
+        SELECT investment_id,company_id,quantity, average_price, quantity*average_price AS Amount 
         FROM Portfolios p 
         INNER JOIN (
-          SELECT MAX(investment_id) AS investment_id,portfolio_id,company_id, CAST(SUM(average_price * quantity) / SUM(quantity) AS DECIMAL(5,2)) AS average_price ,SUM(amount_invested) AS amount_invested,SUM(quantity) AS quantity
+          SELECT MAX(investment_id) AS investment_id,portfolio_id,company_id, CAST(SUM(CASE WHEN quantity>0 THEN average_price * quantity ELSE 0 END) / SUM(CASE WHEN quantity>0 THEN quantity ELSE 0 END) AS DECIMAL(5,2)) AS average_price ,SUM(quantity) AS quantity
           FROM Investments
           GROUP BY portfolio_id,company_id
           ) i ON p.portfolio_id=i.portfolio_id WHERE portfolio_name=?
@@ -143,10 +143,11 @@ app.post("/portfolios/investments", (req, res) => {
           portfolio_id,
           investment.company_id,
           investment.date,
-          parseFloat(investment.amount_invested),
+          isNaN(parseFloat(investment.amount_invested))? null : parseFloat(investment.amount_invested),
           parseFloat(investment.quantity),
-          parseFloat(investment.average_price)
+          isNaN(parseFloat(investment.average_price))? null : parseFloat(investment.average_price)
         ]);
+        
         //Insert multiple rows into the Investments table
         const query = `
           INSERT INTO Investments (portfolio_id, company_id, date, amount_invested, quantity, average_price)
@@ -352,7 +353,7 @@ app.get("/closing/this-month", (req, res) => {
         const portfolio_id = results[0].portfolio_id;
         
         const query=`
-        SELECT i.company_id,SUM(quantity) AS quantity,CAST(AVG(average_price) AS DECIMAL(5,2)) as average_price,h3.date,MAX(closing_price) as closing_price
+        SELECT i.company_id,SUM(quantity) AS quantity,CAST(AVG(average_price) AS DECIMAL(5,2)) as average_price,h3.date,MAX(closing_price)*${USDToEURRate} as closing_price
         FROM Investments i
         INNER JOIN
         (

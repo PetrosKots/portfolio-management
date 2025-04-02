@@ -26,7 +26,7 @@ const Popup: React.FC<PopupProps> = ({ open, onClose }) => {
 
         setNewPortfolio(""); // Clear input after submission
         onClose(); // Close the dialog
-        navigate(`/portfolios?portfolio_name=${newPortfolio}`, { replace: true });//navigate to the new portfolio page 
+        navigate(`/`, { replace: true });//navigate to the new portfolio page 
         window.location.reload(); //reload the page
       } catch (error) {
         console.error("Error creating portfolio:", error);

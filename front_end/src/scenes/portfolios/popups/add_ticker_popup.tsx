@@ -22,7 +22,7 @@ import { useNavigate } from "react-router-dom";
 
 interface PopupProps {
   open: boolean;
-  selectedPortfolio: string;
+  selectedPortfolio: string | null;
   onClose: () => void;
 }
 
@@ -210,7 +210,7 @@ interface DetailsDialogProps {
 
 }
 
-const DetailsDialog: React.FC<DetailsDialogProps> = ({ open, onClose, ticker, investmentDict, onComplete }) => {
+const DetailsDialog: React.FC<DetailsDialogProps> = ({ open, onClose, ticker, onComplete }) => {
 
   const [amount, setAmount] = useState(""); //state to save amount
   const [date, setDate] = useState<Dayjs | null>(dayjs()) //state to save selected date

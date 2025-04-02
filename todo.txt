@@ -28,4 +28,8 @@
 
 11) Amend the code so that the user can remove a specific amount of stocks from the portfolio while keeping the same performance so far
     -At the moment the user can remove the whole investment from the portfolio and the past performance changes like the investment never existed.
+
 12)Fix the functionality of linechart at /portfolios.Maybe change it to TWR over the last month
+
+13) Ammend the code so that the api call that fetches the latest USD to EUR price runs once every day
+    
