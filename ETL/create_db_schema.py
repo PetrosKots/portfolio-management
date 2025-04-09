@@ -34,6 +34,9 @@ try:
         "average_price FLOAT,"
         "quantity FLOAT,"
         "amount_invested INT, "
+        "average_price_sold FLOAT,"
+        "quantity_sold FLOAT,"
+        "amount_sold FLOAT,"
         "FOREIGN KEY (portfolio_id) REFERENCES Portfolios(portfolio_id))"
         
     )
@@ -43,6 +46,7 @@ try:
         "data_id VARCHAR(255) PRIMARY KEY, "
         "company_id VARCHAR(10), "
         "date DATE, "
+        "open_price FLOAT, "
         "closing_price FLOAT, " 
         "FOREIGN KEY (company_id) REFERENCES Companies(company_id))"
         )

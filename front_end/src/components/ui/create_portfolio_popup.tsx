@@ -20,7 +20,7 @@ const Popup: React.FC<PopupProps> = ({ open, onClose }) => {
     if (newPortfolio.trim() !== "") {
       try {
         await axios.post("http://localhost:5000/portfolios", {
-          portfolio_name: newPortfolio, 
+          portfolio_name: newPortfolio.trim(), 
           date_created: new Date().toISOString().split("T")[0],
         });
 

@@ -11,21 +11,27 @@ app.use(express.json());
 
 
 
-let USDToEURRate=null;
-// Make a GET request
+let USDToEURRate=1.095951;
+// function that fetches the latest USD to EUR price and stores it into a variable
+// the variables is used to convert currencies
 async function getExchangeRates() {
   try {
     const response = await fetch('https://api.exchangeratesapi.io/v1/latest?access_key=33687c97909486ac7e4042ddc6156ce1');
     const data = await response.json();
     USDToEURRate = data.rates.USD
+    console.log(`run and latest price is ${USDToEURRate} `)
     //return(data.rates.USD); //return the EUR to USD price
   } catch (error) {
     return 0;
   }
 }
 
-getExchangeRates()
 
+//initial run of the function
+
+//getExchangeRates()
+
+//while the server is running, update the price every 24 hours
 setInterval(getExchangeRates,24*60*60*1000)
 
 // Connect to MySQL
@@ -124,33 +130,38 @@ app.post("/portfolios", (req, res) => {
 app.post("/portfolios/investments", (req, res) => {
   const { portfolio_name } = req.query;
   const investments = req.body.investments; // Expecting an array of investments
-
+  
   // Retrieve the portfolio_id using the portfolio_name
   db.query(
     "SELECT portfolio_id FROM Portfolios WHERE portfolio_name=?",
     [portfolio_name],
     (err, results) => {
+      
       if (err) {
+        
         return res.status(500).json({ error: err.message });
       }
       
       // If portfolio exists, proceed with inserting multiple investments
       if (results.length > 0) {
         const portfolio_id = results[0].portfolio_id;
-
+        
         // Prepare an array of values for batch insert
         const values = investments.map((investment) => [
           portfolio_id,
           investment.company_id,
           investment.date,
-          isNaN(parseFloat(investment.amount_invested))? null : parseFloat(investment.amount_invested),
-          parseFloat(investment.quantity),
-          isNaN(parseFloat(investment.average_price))? null : parseFloat(investment.average_price)
+          parseFloat(investment.amount_invested)? parseFloat(investment.amount_invested) : null,
+          parseFloat(investment.quantity)? parseFloat(investment.quantity) : null,
+          parseFloat(investment.average_price)? parseFloat(investment.average_price) : null,
+          parseFloat(investment.average_price_sold)? parseFloat(investment.average_price_sold) : null,
+          parseFloat(investment.quantity_sold)? parseFloat(investment.quantity_sold) : null,
+          parseFloat(investment.amount_sold)? parseFloat(investment.amount_sold) : null,
         ]);
         
         //Insert multiple rows into the Investments table
         const query = `
-          INSERT INTO Investments (portfolio_id, company_id, date, amount_invested, quantity, average_price)
+          INSERT INTO Investments (portfolio_id, company_id, date, amount_invested, quantity, average_price, average_price_sold, quantity_sold, amount_sold)
           VALUES ?
         `;
 
@@ -238,6 +249,9 @@ app.post("/run-python", (req, res) => {
 
     pythonProcess.stdin.end();
 
+    pythonProcess.on("close", (code) => {
+      res.json({ output: 'success (no input)', exitCode: code });
+    });
   }
 });
 
@@ -353,7 +367,7 @@ app.get("/closing/this-month", (req, res) => {
         const portfolio_id = results[0].portfolio_id;
         
         const query=`
-        SELECT i.company_id,SUM(quantity) AS quantity,CAST(AVG(average_price) AS DECIMAL(5,2)) as average_price,h3.date,MAX(closing_price)*${USDToEURRate} as closing_price
+        SELECT i.company_id,SUM(quantity) AS quantity,CAST( SUM(CASE WHEN quantity>0 THEN quantity*average_price ELSE 0 END) /SUM(CASE WHEN quantity>0 THEN quantity ELSE 0 END) AS DECIMAL(5,2)) as average_price,h3.date,MAX(closing_price)*${USDToEURRate} as closing_price
         FROM Investments i
         INNER JOIN
         (
@@ -416,12 +430,16 @@ app.get("/chart-data", (req, res) =>{
         const portfolio_id = results[0].portfolio_id;
         
         const query=`
-        SELECT T2.company_id,T2.date,T2.date=T1.date AS Is_Investment_date, average_price,quantity,amount_invested,closing_price
+        SELECT T2.company_id,T2.date,T2.date=T1.date AS Is_Investment_date, average_price,quantity,amount_invested, average_price_sold,quantity_sold,amount_sold, closing_price,open_price,last_closing
         FROM 
           (
-          SELECT company_id,date, average_price,quantity,amount_invested
+          SELECT company_id,date, average_price,quantity,amount_invested, average_price_sold,quantity_sold,amount_sold
           FROM Investments WHERE portfolio_id=? 
-          ) T1 INNER JOIN Historical_data T2 ON T1.company_id=T2.company_id
+          ) T1 INNER JOIN 
+          (
+          SELECT company_id,date,open_price,closing_price,LAG(closing_price) OVER (PARTITION BY company_id ORDER BY date) AS last_closing
+          FROM Historical_data
+          ) T2 ON T1.company_id=T2.company_id
         WHERE T2.date>=T1.date
         
         `;

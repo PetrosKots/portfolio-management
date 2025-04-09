@@ -35,7 +35,7 @@ const SellTickerPopup: React.FC<PopupProps> = ({ open, onClose, company, portfol
   const navigate = useNavigate(); // React Router navigation
   const [amount, setAmount] = useState(""); //state to save amount
   const [date, setDate] = useState<Dayjs | null>(dayjs()) //state to save selected date
-  const [detailsList, setDetailsList] = useState<{company_id:string|null, date: string , amount_invested: string, quantity: string; average_price: string; }[]>([]); //list to store amount and date for an investment
+  const [detailsList, setDetailsList] = useState<{company_id:string|null,quantity:string, date: string , amount_sold: string, quantity_sold: string; average_price_sold: string; }[]>([]); //list to store amount and date for an investment
   const [quantity, setQuantity]=useState("")
   const [avgPrice, setAvgPrice]=useState("")
   const [investmentsToAdd, setInvestmentsToAdd]= useState<investment[]>([])
@@ -44,7 +44,7 @@ const SellTickerPopup: React.FC<PopupProps> = ({ open, onClose, company, portfol
   const handleSell = async () => {
       
         if(detailsList){
-          console.log(detailsList)
+          
           try{
             const post_response=await axios.post(
               `http://localhost:5000/portfolios/investments?portfolio_name=${portfolio}`, // endpoint
@@ -94,7 +94,7 @@ const SellTickerPopup: React.FC<PopupProps> = ({ open, onClose, company, portfol
     if (quantity.trim() && avgPrice.trim() && date) {
           
           
-          setDetailsList([...detailsList, {company_id:company, quantity: (-Number(quantity)).toString(), average_price:"Null", amount_invested:amount, date: date.format("YYYY-MM-DD") }]) // Add to list
+          setDetailsList([...detailsList, {company_id:company,quantity: (-Number(quantity)).toString() ,quantity_sold: quantity, average_price_sold:avgPrice, amount_sold:amount, date: date.format("YYYY-MM-DD"), }]) // Add to list
           setAmount(""); // Clear input
           setAvgPrice("")
           setQuantity("")

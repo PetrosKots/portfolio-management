@@ -1,37 +1,21 @@
 import React from 'react'
 import { ResponsiveCalendar, CalendarTooltipProps } from '@nivo/calendar'
 import { Box} from '@mui/material';
-import { ResponsiveHeatMap } from '@nivo/heatmap'
 import _ from 'lodash';
-import { scaleSequential } from 'd3-scale';
-import { interpolateRdYlGn } from 'd3-scale-chromatic'; 
 
 
 interface Props {
 
-    ChartData: DataItem[]
+  PerformanceData: PerformanceItem[]
 }
 
-interface DataItem {
-company_id: string;
-date: string;
-average_price: number;
-quantity: number;
-amount_invested: number;
-closing_price: number;
-Is_Investment_date: number;
-};
-
-interface GroupedData extends DataItem {
-    year: number;
-    month: number;
-    day: number;
-  }
 interface CalendarData {
 
-    value:number;
-    day:string;
+  value:number;
+  day:string;
 }
+type PerformanceItem = [string, number];
+
 const CustomTooltip: React.FC<CalendarTooltipProps> = ({ day, value }) => (
     <div style={{
       background: 'white',
@@ -45,81 +29,31 @@ const CustomTooltip: React.FC<CalendarTooltipProps> = ({ day, value }) => (
       Performance: {value ?? 'No data'} %
     </div>
   );
-const Calendar: React.FC <Props> = ({ChartData})  => {
 
 
-    function GroupData(ApiResponseData: DataItem[]) {
-        
-        const processedData = ApiResponseData.map(item => {
-          const date = new Date(item.date);
-          return {
-            ...item,
-            year: date.getFullYear(),
-            month: date.getMonth() + 1,  // Month is 0-indexed in JavaScript
-            day: date.getDate(),
-          };
-        });
-        
+const Calendar: React.FC <Props> = ({PerformanceData})  => {
     
-        const groupedData = _.groupBy(processedData, (item) => {
-          return `${item.year}-${item.month}-${item.day}`;
-        });
-    
-        
-        
-        return groupedData
-      }
 
-    function ProcessDataForCalendar(GroupedData : Record<string, GroupedData[]>){
-        
-        const TotalValueEachDay= Object.keys(GroupedData).reduce(
-            (acc: Record<string, number[]>, dateKey) => {
-            const totalValue = GroupedData[dateKey].reduce(
-              (sum, item) => sum + item.quantity * item.closing_price,
-              0
-            );
-            let totalInvested=0
-            
-      
-            GroupedData[dateKey].forEach((item) => {
-              
-              if(item.Is_Investment_date==1)
-                totalInvested+=item.amount_invested
-                
-              
-            })
-            acc[dateKey] = [totalValue,totalInvested];
-            return acc;
-          },
-          {})
-        
-        const sortedData = 
-        Object.entries(TotalValueEachDay)
-            .sort(([dateA], [dateB]) => new Date(dateA).getTime() - new Date(dateB).getTime())
-        ;
-        
-        const Performance: [string, number][]= 
-        sortedData.map((data,index) => {
-    
-            if(sortedData[index-1] && data[1][1]==0 ){
-            return [data[0], (data[1][0]-sortedData[index-1][1][0])/sortedData[index-1][1][0]]
-            }else if(sortedData[index-1] && data[1][1]>0){
-            
-            return [data[0], (data[1][0] - (sortedData[index-1][1][0] + data[1][1])) / (sortedData[index-1][1][0] + data[1][1]) ]
-            }else{
-            return [data[0],0]
-            }
-    
-        })
-        
-        const CalendarData = Performance.map( ([date,performance]) => ({
-            value: Number((performance*100).toFixed(2)),
-            day: new Date(date).toISOString().substring(0, 10)
+    function ProcessData (PerformanceData: PerformanceItem[]) {
+      //Formatting the data to the right format for the calendar
+      const CalendarData = PerformanceData.map(([date, performance]) => {
 
-        }))
+        // Split input date and make it YYYY-MM-DD from YYYY-M-D
+        const [year, month, day] = date.split('-').map(Number)
+        const paddedMonth = String(month).padStart(2, '0')
+        const paddedDay = String(day).padStart(2, '0')
         
-        return CalendarData
-      }
+        const isoDate = `${year}-${paddedMonth}-${paddedDay}` 
+    
+        return {
+            value: Number((performance * 100).toFixed(2)),
+            day: isoDate
+        };
+    });
+    
+    return CalendarData
+  }
+  
 
 
     //function that returns the min date of the calendar data.It is a necessary property of the calendar
@@ -145,16 +79,16 @@ const Calendar: React.FC <Props> = ({ChartData})  => {
     }
     const rowHeight = 200; // Height per year to avoid squeezing
 
-    const chartHeight = Math.max(400, (GetMaxDate(ProcessDataForCalendar(GroupData(ChartData))).length / 365) * rowHeight); // Ensure enough space for each year
+    const chartHeight = Math.max(400, (GetMaxDate(ProcessData(PerformanceData))).length / 365 * rowHeight); // Ensure enough space for each year
     
   return (
     <div>
         <Box sx={{width: "100%",maxHeight:400, overflow: "auto"}}>
             <div style={{ height:chartHeight}}>
             <ResponsiveCalendar
-                data={ProcessDataForCalendar(GroupData(ChartData))}
-                from={GetMinDate(ProcessDataForCalendar(GroupData(ChartData)))}
-                to={GetMaxDate(ProcessDataForCalendar(GroupData(ChartData)))}
+                data={ProcessData(PerformanceData)}
+                from={GetMinDate(ProcessData(PerformanceData))}
+                to={GetMaxDate(ProcessData(PerformanceData))}
                 minValue={-1.5}
                 maxValue={1.5}
                 theme={{

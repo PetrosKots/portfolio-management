@@ -1,32 +1,29 @@
 import React from 'react'
 import { Route, Routes } from 'react-router-dom'
-import { useState, useEffect } from "react";
+import {  useEffect } from "react";
 import './globals.css'
 import HomeSidebar from '@/components/ui/sidebar';
 import { Home } from './scenes/home'
 import Portfolios from './scenes/portfolios'
 import Charts from './scenes/charts';
 import RootLayout from './scenes/RootLayout'
-import { Sidebar } from 'react-pro-sidebar';
-import { fetchUsers } from "./api";
 import axios from "axios";
 
 const App = () => {
-  const [response, setResponse] = useState("");
 
-  useEffect(() => {
-    fetchUsers()
-      .then((res) => setResponse(JSON.stringify(res.data, null, 2)))
-      .catch((err) => setResponse(`Error: ${err.message}`));
-  }, []);
+
+  
 
   //post request that fetches the latest closing prices for all the investment
-  useEffect(() =>{
-        
-  
-    axios.post(`http://localhost:5000/run-python`)
-
+  useEffect(() => {
+    axios.post(
+      "http://localhost:5000/run-python",
+       
+      {
+        timeout: 10000,
+      })
   })
+  
   return (
     
     
@@ -34,7 +31,6 @@ const App = () => {
       
       
       
-
       <HomeSidebar/>
       
        

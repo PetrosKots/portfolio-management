@@ -11,11 +11,11 @@
     -At the moment when you remove a ticker, the total value doesn't update.
 
 5) Add to the fourth box at /Portfolios the daily profit/loss in dollars
-    -At the moment is an empty boxe
+    -At the moment is an empty box
 
 6) Possibly adjust the code on how the performance is calculated for the /Portfolios performance linechart and the 'performance since inception' box.
 
-7) Fix the content of the boxes at /Portfolios when the selected portfolio is empty.
+7)✅ Fix the content of the boxes at /Portfolios when the selected portfolio is empty.
     -At the moment it displays NaN valuies and empty charts for the linechart.
 
 8) Fix the code so that the gridbox at /Portfolios updates when it loads for the first time a different day.
@@ -26,10 +26,10 @@
 10)✅ Fix the code so that the \chart data returned from the API are grouped by company
     -At the moment the API returns different rows is the portfolio has more that one investments on the same company
 
-11) Amend the code so that the user can remove a specific amount of stocks from the portfolio while keeping the same performance so far
+11)✅ Amend the code so that the user can remove a specific amount of stocks from the portfolio while keeping the same performance so far
     -At the moment the user can remove the whole investment from the portfolio and the past performance changes like the investment never existed.
 
 12)Fix the functionality of linechart at /portfolios.Maybe change it to TWR over the last month
 
-13) Ammend the code so that the api call that fetches the latest USD to EUR price runs once every day
+13)✅ Ammend the code so that the api call that fetches the latest USD to EUR price runs once every day
     

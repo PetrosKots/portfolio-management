@@ -77,7 +77,7 @@ def GetAndLoadHistoricalData(companies,dates):
 
         #creating a list of items like "AMZN-2024-01-31, AMZN , 2024-01-31, closing price"
         #the data_id "AMZN-2024-01-31" is used to avoid saving duplicate rows
-        mylist=[ (row['Company'] + '-' + str(index), row['Company'], index.strftime('%Y-%m-%d'), price,) for index,price in zip(hist_data['Close'].index, hist_data['Close'].values) ]
+        mylist=[ (row['Company'] + '-' + str(index), row['Company'], index.strftime('%Y-%m-%d'), open_price, close_price) for index,open_price,close_price in zip(hist_data['Close'].index,hist_data['Open'].values, hist_data['Close'].values) ]
   
         
 
@@ -89,7 +89,7 @@ def GetAndLoadHistoricalData(companies,dates):
             
             
             #inserting the historical closing price of the company into the database.Using Ignore to avoid duplicates.
-            cursor.executemany("INSERT IGNORE INTO Historical_data (data_id,company_id,date,closing_price) VALUES (%s,%s, %s, %s) ",mylist)
+            cursor.executemany("INSERT IGNORE INTO Historical_data (data_id,company_id,date,open_price,closing_price) VALUES (%s,%s, %s, %s, %s) ",mylist)
                 
             
             conn.commit()
@@ -113,13 +113,16 @@ def GetAndLoadMostRecentData():
 
             # Reindex and forward-fill missing values
             most_recent_data = most_recent_data.reindex(full_date_range).ffill()
-
+            
             #creating a list of items like "AMZN-2024-01-31, AMZN , 2024-01-31, closing price"
             #the data_id "AMZN-2024-01-31" is used to avoid saving duplicate rows
-            mylist=[ (company['company_id'] + '-' + str(index), company['company_id'], index.strftime('%Y-%m-%d'), price,) for index,price in zip(most_recent_data['Close'].index, most_recent_data['Close'].values) ]
+            mylist=[ (company['company_id'] + '-' + str(index), company['company_id'], index.strftime('%Y-%m-%d'), open_price,close_price) for index,open_price,close_price in zip(most_recent_data['Close'].index,most_recent_data['Open'].values, most_recent_data['Close'].values) ]
             
+             
+            
+
             #inserting the historical closing price of the company into the database.Using Ignore to avoid duplicates.
-            cursor.executemany("INSERT IGNORE INTO Historical_data (data_id,company_id,date,closing_price) VALUES (%s,%s, %s, %s) ",mylist)
+            cursor.executemany("INSERT IGNORE INTO Historical_data (data_id,company_id,date,open_price,closing_price) VALUES (%s,%s, %s,%s, %s) ON DUPLICATE KEY UPDATE closing_price = IF(closing_price != VALUES(closing_price), VALUES(closing_price), closing_price)",mylist)
                 
             
             conn.commit()

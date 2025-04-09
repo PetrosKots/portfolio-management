@@ -27,7 +27,7 @@ const HomeSidebar: React.FC = () => {
     neutralLight: '#e0e0e0',
     neutralMain: '#666666',
   };
-
+  
   useEffect(() => {
     // Fetch the list of portfolios
     axios.get("http://localhost:5000/portfolios")
