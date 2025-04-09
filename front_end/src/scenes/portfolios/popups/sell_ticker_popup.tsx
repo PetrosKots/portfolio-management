@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from "@mui/material";
-
+import Alert from '@mui/material/Alert';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
@@ -12,13 +12,14 @@ import FilledInput from '@mui/material/FilledInput';
 import{Box} from '@mui/material'
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-
+import Stack from '@mui/material/Stack';
 
 interface PopupProps {
   open: boolean;
   onClose: () => void;
   company: string | null;
   portfolio: string | null;
+  availableQuantity: number|null
 }
 
 interface investment { 
@@ -29,7 +30,7 @@ interface investment {
   average_price: string
 
 }
-const SellTickerPopup: React.FC<PopupProps> = ({ open, onClose, company, portfolio }) => {
+const SellTickerPopup: React.FC<PopupProps> = ({ open, onClose, company, portfolio, availableQuantity }) => {
   
   
   const navigate = useNavigate(); // React Router navigation
@@ -39,7 +40,7 @@ const SellTickerPopup: React.FC<PopupProps> = ({ open, onClose, company, portfol
   const [quantity, setQuantity]=useState("")
   const [avgPrice, setAvgPrice]=useState("")
   const [investmentsToAdd, setInvestmentsToAdd]= useState<investment[]>([])
-  
+  const [quantityAlert,setQuantityAlert]= useState(false)
   //post request to the API to add the new portfolio to the database
   const handleSell = async () => {
       
@@ -90,15 +91,22 @@ const SellTickerPopup: React.FC<PopupProps> = ({ open, onClose, company, portfol
       
      
   const handleAddDetail= () =>{
-
-    if (quantity.trim() && avgPrice.trim() && date) {
+    if(availableQuantity && Number(quantity)>availableQuantity ){
+      
+        setQuantityAlert(true)
+        setTimeout(() => {
+          setQuantityAlert(false);
+        }, 3000);
+      
+      
+    }else if (quantity.trim() && avgPrice.trim() && date) {
           
           
-          setDetailsList([...detailsList, {company_id:company,quantity: (-Number(quantity)).toString() ,quantity_sold: quantity, average_price_sold:avgPrice, amount_sold:amount, date: date.format("YYYY-MM-DD"), }]) // Add to list
-          setAmount(""); // Clear input
-          setAvgPrice("")
-          setQuantity("")
-          setDate(dayjs());
+      setDetailsList([...detailsList, {company_id:company,quantity: (-Number(quantity)).toString() ,quantity_sold: quantity, average_price_sold:avgPrice, amount_sold:amount, date: date.format("YYYY-MM-DD"), }]) // Add to list
+      setAmount(""); // Clear input
+      setAvgPrice("")
+      setQuantity("")
+      setDate(dayjs());
           
         }
   }
@@ -107,7 +115,10 @@ const SellTickerPopup: React.FC<PopupProps> = ({ open, onClose, company, portfol
   return (
     
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-
+      {quantityAlert &&(
+        <Alert variant="outlined" severity="error"  onClose={() => setQuantityAlert(false)}>
+            Insert a valid quantity.You are trying to sell more than the available stocks.
+        </Alert>)}
       <DialogTitle>Enter Sell Details </DialogTitle>
       <DialogContent sx={{ height: "400px", overflowY: "auto" }}>
         <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>

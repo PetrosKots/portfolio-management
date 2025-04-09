@@ -72,7 +72,7 @@ const Portfolios = () => {
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null); //HTML element used to capture the location of the click
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null); //id of the row that the editrow was clicked
   const [openSellPopup, setSellPopup] = useState(false)
-  
+  const [availableQuantity, setAvailableQuantity]= useState(0)
 
 
   //fetching the portfolio data and creating the datagrid columns 
@@ -127,6 +127,7 @@ const Portfolios = () => {
             
             // Set DataGrid columns and data
             setColumns(allColumns);
+            
             setPortfolioData(updatedData);
           } else {
             // If API returns no data, clear table
@@ -149,10 +150,11 @@ const Portfolios = () => {
   }, [selectedPortfolio]);
 
   //function to handle the click of the edit row button
-  const handleEditRowClick = (event: React.MouseEvent<HTMLButtonElement>, company: string) => {
+  const handleEditRowClick = (event: React.MouseEvent<HTMLButtonElement>, company: string, quantity:number) => {
     
     setAnchorEl(event.currentTarget);
     setSelectedCompany(company);
+    setAvailableQuantity(quantity)
   };
 
   //function to close the editrow button
@@ -170,7 +172,7 @@ const Portfolios = () => {
   // Function to render a button that is positioned as first column of the datagrid and will allow editing of the row
   const EditRowButton = (params: any) => (
     <>
-      <IconButton onClick={(event) => handleEditRowClick(event, params.row.Company)} size="small">
+      <IconButton onClick={(event) => handleEditRowClick(event, params.row.Company, params.row.quantity)} size="small">
         <MoreHorizIcon />
       </IconButton>
       <Menu
@@ -417,7 +419,7 @@ function transformDataForLineChart(data: PortfolioData[]) {
           
           
           <DeletePortfolioPopup open={openDeleteTickerPopup} onClose={() => setOpenDeletePortfolioPopup(false)} selectedPortfolio={selectedPortfolio} />
-          <SellTickerPopup open={openSellPopup} onClose={() => setSellPopup(false)} company={selectedCompany} portfolio={selectedPortfolio}/>
+          <SellTickerPopup open={openSellPopup} onClose={() => setSellPopup(false)} company={selectedCompany} portfolio={selectedPortfolio} availableQuantity={availableQuantity}/>
         </div>
           
         
