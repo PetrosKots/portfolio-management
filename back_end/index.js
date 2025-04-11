@@ -199,6 +199,41 @@ app.delete("/portfolios/investments", (req, res) => {
     )
 });
 
+app.delete("/portfolios/investments/remove", (req, res) => {
+
+  const {portfolio_name,company_id}=req.query //getting the portfolio_id and company if of the investment to delete
+  
+  db.query(
+    "SELECT portfolio_id FROM Portfolios WHERE portfolio_name=?",
+    [portfolio_name],
+    (err,results) =>{
+      if (err) {
+        
+        return res.status(500).json({ error: err.message });
+
+      }else if(results.length>0){
+        const portfolio_id = results[0].portfolio_id
+
+        
+        db.query(
+          "DELETE FROM Investments WHERE portfolio_id=? AND company_id=?",
+          [portfolio_id,company_id],
+          (err, results) => {
+            if (err) {
+              return res.status(500).json({ error: err.message });
+            }else {
+              res.json("Delete Completed ")
+            }
+          
+          }
+          )
+      }
+    }
+  )
+
+  
+});
+
 //endpoint to run python script that fetches the historical data and loads it to the database
 app.post("/run-python", (req, res) => {
   const { companies, dates } = req.body; // Extract the company and date of investment arrays

@@ -39,12 +39,29 @@ const SellTickerPopup: React.FC<PopupProps> = ({ open, onClose, company, portfol
   const [detailsList, setDetailsList] = useState<{company_id:string|null,quantity:string, date: string , amount_sold: string, quantity_sold: string; average_price_sold: string; }[]>([]); //list to store amount and date for an investment
   const [quantity, setQuantity]=useState("")
   const [avgPrice, setAvgPrice]=useState("")
-  const [investmentsToAdd, setInvestmentsToAdd]= useState<investment[]>([])
+  const [removeInvestment, setRemoveInvestment]= useState(false)
   const [quantityAlert,setQuantityAlert]= useState(false)
+
   //post request to the API to add the new portfolio to the database
   const handleSell = async () => {
-      
-        if(detailsList){
+        
+        //if the amount sold equals to total of the available shares
+        //delete completely the investment from the database
+        if (removeInvestment==true){
+          try{
+            const respone= await axios.delete(`http://localhost:5000/portfolios/investments/remove?portfolio_name=${portfolio}&company_id=${company}`)
+            
+            if (respone.status==200){
+              setRemoveInvestment(false)
+              onClose()
+              navigate(`/portfolios?portfolio_name=${portfolio}`, { replace: true }); 
+              window.location.reload();
+            }
+          }catch(error){
+            console.log(error)
+          }
+
+        }else if(detailsList){
           
           try{
             const post_response=await axios.post(
@@ -100,7 +117,9 @@ const SellTickerPopup: React.FC<PopupProps> = ({ open, onClose, company, portfol
       
       
     }else if (quantity.trim() && avgPrice.trim() && date) {
-          
+      if(Number(quantity)==availableQuantity){
+        setRemoveInvestment(true)
+      }
           
       setDetailsList([...detailsList, {company_id:company,quantity: (-Number(quantity)).toString() ,quantity_sold: quantity, average_price_sold:avgPrice, amount_sold:amount, date: date.format("YYYY-MM-DD"), }]) // Add to list
       setAmount(""); // Clear input
