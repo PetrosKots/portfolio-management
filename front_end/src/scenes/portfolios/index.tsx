@@ -2,7 +2,7 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
-import { groupBy } from 'lodash';
+import { groupBy, values } from 'lodash';
 import { Box, Typography } from '@mui/material';
 import { DataGrid, GridColDef, gridClasses, GridToolbarContainer, GridCellParams } from '@mui/x-data-grid';
 import { Button as BootstrapButton } from 'react-bootstrap';
@@ -36,6 +36,12 @@ type PieChartData = {
   label : string
 };
 
+interface LastOpenClose {
+  company_id: string,
+  quantity: number,
+  open_price:number,
+  closing_price: number
+}
 const Portfolios = () => {
   const chartConfig = {
     desktop: {
@@ -67,13 +73,13 @@ const Portfolios = () => {
   // Track selected rows for deletion
   const [selectedRows, setSelectedRows] = useState<number[]>([]); // Store selected rows for deletion
   const [data,setData]=useState<PortfolioData[]>([])
-  const [closingPrices, setClosingPrices] = useState<any>(null);
-  const [thisMonthData, setThisMonthData] = useState<any>(null);
+  const [closingPrices, setClosingPrices] = useState<any>(null); // state for the last closing prices returned by the api
+  const [thisMonthData, setThisMonthData] = useState<any>(null);  //state for the last month data returned by the api
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null); //HTML element used to capture the location of the click
   const [selectedCompany, setSelectedCompany] = useState<string | null>(null); //id of the row that the editrow was clicked
   const [openSellPopup, setSellPopup] = useState(false)
   const [availableQuantity, setAvailableQuantity]= useState(0)
-
+  const [lastOpenClose,setLastOpenClose]= useState<LastOpenClose[]>([])
 
   //fetching the portfolio data and creating the datagrid columns 
   useEffect(() => {
@@ -329,7 +335,23 @@ const Portfolios = () => {
     }
     , [portfolioData]);
 
+  
+    //hook to fetch todays opening and last known price 
+  useEffect(() => {
+    if(selectedPortfolio){
+      axios.get(`http://localhost:5000/portfolios/opening-and-last?portfolio_name=${selectedPortfolio}`)
+      .then((response) => {
+        setLastOpenClose(response.data); 
+      })
+      .catch((error) => {
+        console.error("Error fetching portfolios:", error);
+      });
+    }
 
+    }
+    , [portfolioData]);
+
+  
   //calculating the portfolios performance
   function CalculatePerformance(data : PortfolioData[], prices: PortfolioData[]) {
 
@@ -382,28 +404,47 @@ const Portfolios = () => {
 }, [total_value,portfolioData])
    
 
-function transformDataForLineChart(data: PortfolioData[]) {
-    //using that groupedByDate, the line chart displays only the days that have data for all
-    // the tickers.The problem is that for days that the american stock market is closed for holidays
-    //but the European is open, the api returns data only for the european tickers, so the total value
-    //is wrong as it only calculates the returned values
-    //could either completely remove european stock or find another way to prevent it
-    const groupedByDate=Object.fromEntries( Object.entries(groupBy(data,'date')).filter( ([date, companies]) => companies.length==portfolioData.length ) )
-    
-    
-    
-    const portfolioValueEachDay = Object.entries(groupedByDate).map(([date, group]) => {
-
-      // Perform calculations within each date group
-      const totalValue = group.reduce((sum, entry) => sum + (entry.quantity*entry.closing_price), 0);
+  function transformDataForLineChart(data: PortfolioData[]) {
+      //using that groupedByDate, the line chart displays only the days that have data for all
+      // the tickers.The problem is that for days that the american stock market is closed for holidays
+      //but the European is open, the api returns data only for the european tickers, so the total value
+      //is wrong as it only calculates the returned values
+      //could either completely remove european stock or find another way to prevent it
+      const groupedByDate=Object.fromEntries( Object.entries(groupBy(data,'date')).filter( ([date, companies]) => companies.length==portfolioData.length ) )
       
-      return { date, totalValue }; // Return an object with date and totalValue
-  });
-    return portfolioValueEachDay
-}
+      
+      
+      const portfolioValueEachDay = Object.entries(groupedByDate).map(([date, group]) => {
 
- 
+        // Perform calculations within each date group
+        const totalValue = group.reduce((sum, entry) => sum + (entry.quantity*entry.closing_price), 0);
+        
+        return { date, totalValue }; // Return an object with date and totalValue
+    });
+      return portfolioValueEachDay
+  }
+
+ function CalculateTodaysPnL(data: LastOpenClose[]){
+  const PnL= data.reduce((sum,company) => {
+    
+    return sum + Object.values(company).reduce(()  =>(company.quantity*company.closing_price) - (company.quantity*company.open_price))
+  },0)
+
+  return PnL
+ }
   
+ 
+ function CalculateTodaysPerformance(data: LastOpenClose[]) {
+    const ValuAtOpen= data.reduce((sum,company) => {
+      return sum + Object.values(company).reduce(()  => (company.quantity*company.open_price))
+    },0)
+    
+    const LatestValue = data.reduce((sum,company) => {
+      return sum + Object.values(company).reduce(()  => (company.quantity*company.closing_price))
+    },0)
+    
+    return (Number(LatestValue)-Number(ValuAtOpen))/Number(ValuAtOpen)
+ }  
   
   return (
     
@@ -652,8 +693,19 @@ function transformDataForLineChart(data: PortfolioData[]) {
                 ease: "easeOut",
             }}
             >
-              
-          
+            <div className='h1-bold' >Daily P&L</div>
+            <div className='flex portfolio-value-number' >
+                <span>$</span>
+                <motion.pre >{CalculateTodaysPnL(lastOpenClose).toFixed(2)}</motion.pre>
+                  
+              </div>
+              <div 
+                className={CalculateTodaysPerformance(lastOpenClose) > 0 ? 'text-green' : 'text-red'} 
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginTop: '10px' }}
+              > 
+                {(CalculateTodaysPerformance(lastOpenClose)*100).toFixed(2) + "%"}<TrendingUp className="h-4 w-4" />
+                <div className='portfolio-value-box-text'>since inception</div>
+              </div>
             </motion.div>
 
           </div>

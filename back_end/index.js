@@ -451,7 +451,7 @@ app.get("/closing/this-month", (req, res) => {
 app.get("/chart-data", (req, res) =>{
 
   const {portfolio_name}=req.query
-
+  
   db.query(
     "SELECT portfolio_id FROM Portfolios WHERE portfolio_name=?",
     [portfolio_name],
@@ -462,7 +462,7 @@ app.get("/chart-data", (req, res) =>{
       
       // If portfolio exists, 
       if (results.length > 0) {
-        const portfolio_id = results[0].portfolio_id;
+        const portfolio_id = results[0].portfolio_id
         
         const query=`
         SELECT T2.company_id,T2.date,T2.date=T1.date AS Is_Investment_date, average_price,quantity,amount_invested, average_price_sold,quantity_sold,amount_sold, closing_price,open_price,last_closing
@@ -477,7 +477,7 @@ app.get("/chart-data", (req, res) =>{
           ) T2 ON T1.company_id=T2.company_id
         WHERE T2.date>=T1.date
         
-        `;
+        `
       
         db.query(query, [portfolio_id], (err, insertResults) => {
           if (err) {
@@ -496,7 +496,60 @@ app.get("/chart-data", (req, res) =>{
 
 });
 
+app.get("/portfolios/opening-and-last", (req,res) =>{
 
+  const {portfolio_name}=req.query
+  
+  db.query("SELECT portfolio_id FROM Portfolios WHERE portfolio_name=?", [portfolio_name], 
+    (err,response) => {
+
+      if(err){
+
+        return res.status(500).json({error: err.message})
+
+      }else {
+
+        if (response.length>0){
+          const portfolio_id=response[0].portfolio_id
+          
+          const query=`
+          SELECT T2.company_id, quantity, open_price, closing_price
+          FROM 
+          (
+            SELECT *
+            FROM Historical_data 
+            WHERE date = 
+              (
+              SELECT MAX(date)
+              FROM Historical_data
+              
+              )
+            ) T1 INNER JOIN
+            (SELECT company_id, SUM(quantity) AS quantity
+            FROM Investments
+            WHERE portfolio_id=?
+            GROUP BY company_id
+            ) T2 ON T1.company_id=T2.company_id
+          `
+
+          db.query(query, [portfolio_id], (err, insertResults) => {
+            if (err) {
+              return res.status(500).json({ error: err.message });
+            } else {
+              // Respond with the number of inserted rows
+              res.json(insertResults);
+            }
+          });
+        }else {
+          // If no portfolio found, send a 404 error
+          res.status(404).json({ error: "Portfolio not found" });
+        }
+
+      }
+    }
+  )
+
+})
 // Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
