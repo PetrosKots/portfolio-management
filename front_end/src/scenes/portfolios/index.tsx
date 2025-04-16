@@ -14,11 +14,11 @@ import SellTickerPopup from './popups/sell_ticker_popup';
 import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import { IconButton } from "@mui/material";
-import DeleteIcon from "@mui/icons-material/Delete";
 import DeleteOutlinedIcon from '@mui/icons-material/DeleteOutlined';
 import { ResponsivePie } from '@nivo/pie'
 import { TrendingUp } from "lucide-react"
 import * as motion from "motion/react-client"
+import DeleteTickerPopup from './popups/delete_ticker_popup';
 import { animate, useMotionValue, useTransform } from "motion/react"
 import  "../../globals.css"
 import { CartesianGrid, Line, LineChart, XAxis,YAxis } from "recharts"
@@ -69,8 +69,8 @@ const Portfolios = () => {
   const [portfolioData, setPortfolioData] = useState<PortfolioData[]>([]); // Data for DataGrid
   const [columns, setColumns] = useState<GridColDef[]>([]); // Dynamic columns for DataGrid
   const [openTickerPopup, setOpenTickerPopup] = useState(false); // State for Ticker Popup
-  const [openDeleteTickerPopup, setOpenDeletePortfolioPopup] = useState(false); // State for Ticker Popup
-  
+  const [openDeletePortfolioPopup, setOpenDeletePortfolioPopup] = useState(false); // State for Ticker Popup
+  const [openDeleteTickerPopup, setOpenDeleteTickerPopup]= useState(false) //state for delete ticker popup
   const [data,setData]=useState<PortfolioData[]>([])
   const [closingPrices, setClosingPrices] = useState<any>(null); // state for the last closing prices returned by the api
   const [thisMonthData, setThisMonthData] = useState<any>(null);  //state for the last month data returned by the api
@@ -174,6 +174,12 @@ const Portfolios = () => {
     
   }
 
+  const handleDeleteRowClick = () => {
+    setOpenDeleteTickerPopup(true)
+    setAnchorEl(null);
+    
+  }
+
   // Function to render a button that is positioned as first column of the datagrid and will allow editing of the row
   const EditRowButton = (params: any) => (
     <>
@@ -187,9 +193,8 @@ const Portfolios = () => {
         anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
         transformOrigin={{ vertical: "top", horizontal: "left" }}
       >
-        <MenuItem onClick={handleEditRowClose}>Edit</MenuItem>
         <MenuItem onClick={handleSellRowClick}>Sell</MenuItem>
-        <MenuItem onClick={handleEditRowClose}>Delete</MenuItem>
+        <MenuItem onClick={handleDeleteRowClick}>Delete</MenuItem>
       </Menu>
     </>
   );
@@ -427,8 +432,8 @@ const Portfolios = () => {
             <DeleteOutlinedIcon sx={{ mr: 1 }} /> Delete Portfolio
           </BootstrapButton>
           
-          
-          <DeletePortfolioPopup open={openDeleteTickerPopup} onClose={() => setOpenDeletePortfolioPopup(false)} selectedPortfolio={selectedPortfolio} />
+          <DeleteTickerPopup open={openDeleteTickerPopup} onClose={() => setOpenDeleteTickerPopup(false)} portfolio={selectedPortfolio} company={selectedCompany}/>
+          <DeletePortfolioPopup open={openDeletePortfolioPopup} onClose={() => setOpenDeletePortfolioPopup(false)} selectedPortfolio={selectedPortfolio} />
           <SellTickerPopup open={openSellPopup} onClose={() => setSellPopup(false)} company={selectedCompany} portfolio={selectedPortfolio} availableQuantity={availableQuantity}/>
         </div>
           
