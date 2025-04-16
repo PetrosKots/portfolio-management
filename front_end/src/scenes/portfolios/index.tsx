@@ -70,8 +70,7 @@ const Portfolios = () => {
   const [columns, setColumns] = useState<GridColDef[]>([]); // Dynamic columns for DataGrid
   const [openTickerPopup, setOpenTickerPopup] = useState(false); // State for Ticker Popup
   const [openDeleteTickerPopup, setOpenDeletePortfolioPopup] = useState(false); // State for Ticker Popup
-  // Track selected rows for deletion
-  const [selectedRows, setSelectedRows] = useState<number[]>([]); // Store selected rows for deletion
+  
   const [data,setData]=useState<PortfolioData[]>([])
   const [closingPrices, setClosingPrices] = useState<any>(null); // state for the last closing prices returned by the api
   const [thisMonthData, setThisMonthData] = useState<any>(null);  //state for the last month data returned by the api
@@ -196,31 +195,6 @@ const Portfolios = () => {
   );
 
   
-  // Handle row deletion
-  const handleDelete = async () => {
-    // Retrieve the selected rows
-    const rowsToDelete = portfolioData.filter((row) =>
-      selectedRows.includes(row.id),
-    );
-
-    //Call API to delete rows from the database
-    try {
-      const deletePromises = rowsToDelete.map(row =>
-        axios.delete(`http://localhost:5000/portfolios/investments?investment_id=${row.investment_id}}`, {
-          data: { ...row } // Pass the row data to delete
-        }))
-
-      //Remove deleted rows from the DataGrid
-      setPortfolioData((prevData) => prevData.filter((row) => !selectedRows.includes(row.id)));
-
-      //Clear the selected rows state
-      setSelectedRows([]); // Clear selection after deleting
-      }
-      
-    catch (error) {
-      console.error("Error deleting rows:", error);
-    } 
-  };
 
   //handle the delete portfolio button
   const handleDeletePortfolio = async () => {
@@ -255,12 +229,7 @@ const Portfolios = () => {
           Add ticker
         </MuiButton>
 
-        {/* Show delete button only if rows are selected */}
-        {selectedRows.length > 0 && (
-          <IconButton color="error" onClick={handleDelete}>
-            <DeleteIcon />
-          </IconButton>
-        )}
+        
 
           {/* popup to add investment information about the selected ticker */}
         <TickerPopup open={openTickerPopup} onClose={() => setOpenTickerPopup(false)} selectedPortfolio={selectedPortfolio} />
@@ -500,10 +469,9 @@ const Portfolios = () => {
             ]
           }
           pageSizeOptions={[10]}
-          checkboxSelection       
+                
           disableRowSelectionOnClick
           slots={{ toolbar: EditToolbar }}
-          onRowSelectionModelChange={(newSelectionModel) => setSelectedRows(newSelectionModel as number[])} 
           getCellClassName={(params: GridCellParams<any, any, number>) => {
             if (params.field === 'performance' ) {
               return (parseFloat(params.value.replace("%","")) >= 0 ? 'profit' : 'loss') ;
