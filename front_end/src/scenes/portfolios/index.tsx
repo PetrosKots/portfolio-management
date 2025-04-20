@@ -677,7 +677,7 @@ const Portfolios = () => {
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '5px', marginTop: '10px' }}
               > 
                 {(CalculateTodaysPerformance(lastOpenClose)*100).toFixed(2) + "%"}<TrendingUp className="h-4 w-4" />
-                <div className='portfolio-value-box-text'>since inception</div>
+                
               </div>
             </motion.div>
 

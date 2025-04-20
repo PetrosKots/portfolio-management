@@ -3,6 +3,7 @@ const { spawn } = require("child_process");
 const express = require("express");
 const mysql = require("mysql2");
 const cors = require("cors");
+const yahooFinance = require("yahoo-finance2").default;
 require("dotenv").config();
 
 const app = express();
@@ -550,6 +551,49 @@ app.get("/portfolios/opening-and-last", (req,res) =>{
   )
 
 })
+
+//api end point to fecth S&P 500 historical data.
+app.get("/historical/s&p500", async (req, res) => {
+
+  //hiding a warning about historical() not working anymore
+  //the library converts it to Chart() which is the functional one automatically
+  yahooFinance.suppressNotices(['ripHistorical']);
+
+  //getting the start and end date for the request
+  const { start, end } = req.query;
+
+  try {     //fetching the data of S&P for the desired date range
+    const data = await yahooFinance.historical("^GSPC", {
+      period1: start,
+      period2: end,
+      suppressNotices: ['ripHistorical']
+    })
+
+    //calculating the percentage increase/decrease for each day
+    const result = data.slice(1).map((entry, i) => {
+      const prevClose = data[i].close;
+      const currClose = entry.close;
+      const percentChange = ((currClose - prevClose) / prevClose) * 100;
+
+      //returning the date, value at close and percentage change for each day
+      return {
+        date: entry.date.toISOString().split("T")[0],
+        close: currClose,
+        percentChange: +percentChange.toFixed(2),
+      };
+    });
+
+    //sending the response
+    res.json(result);
+
+    //error handling
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Failed to fetch S&P 500 data." });
+  }
+});
+
+
 // Start the server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {

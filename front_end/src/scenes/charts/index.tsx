@@ -236,7 +236,7 @@ const index = () => {
         return [date, 0]
       }
     })
-    console.log(TotalValueEachDay)
+    
   return Performance
   }
 

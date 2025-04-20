@@ -16,7 +16,7 @@ const DeletePortfolioPopup: React.FC<PopupProps> = ({ open, onClose, selectedPor
     const navigate = useNavigate();
     
     
-  //post request to the API to add the new portfolio to the database
+  //delete API request to the API to delete the portfolio from the database
   const handleDeletePortfolio = async () => {
   
 
@@ -63,7 +63,7 @@ const DeletePortfolioPopup: React.FC<PopupProps> = ({ open, onClose, selectedPor
                     <Button onClick={handleClose} color="secondary">No</Button>
             </DialogActions>
         </Dialog>
-        {/* Alert if the user tries to add tickers without selecting a portfolio first */}
+        
         
     </>
     
