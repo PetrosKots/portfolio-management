@@ -6,6 +6,7 @@ import axios from "axios";
 import { useSearchParams } from "react-router-dom";
 import  "../../globals.css"
 import _ from 'lodash' 
+import Linechart from './Linechart';
 
 interface DataItem {
   company_id: string  //company ticker
@@ -46,7 +47,7 @@ const index = () => {
           
         })
         .catch((error) => {
-          console.error("kala");
+          console.error("error while fetching the chart data");
         });
     }, [selectedPortfolio]);
   }
@@ -240,7 +241,7 @@ const index = () => {
   return Performance
   }
 
-    
+  
   return (
     <div>
       
@@ -259,6 +260,16 @@ const index = () => {
       {selectedPortfolio && data.length>1 &&(
         
         <div><Calendar PerformanceData={CalculatePerformance(GroupData(data))}/> </div>
+        
+        
+      )}
+      </Box>
+
+      <Box sx={{marginTop: 10}}>
+      <div className='h1-bold'>Performance Compared To S&P 500 Index</div>
+      {selectedPortfolio && data.length>1 &&(
+        
+        <div><Linechart  PerformanceData={CalculatePerformance(GroupData(data))}/> </div>
         
         
       )}
