@@ -98,12 +98,14 @@ const Calendar: React.FC <Props> = ({PerformanceData})  => {
                         "#ffffff"
                         }
                 }}
-                emptyColor="#eeeeee"
+                
+                emptyColor="#1F2A40"
                 colors={[  '#f50707', '#ff5252','#ffbaba', '#d4ffb2','#85ff7a', '#2db83d' ]}
                 margin={{ top: 40, right: 40, bottom: 40, left: 40 }}
                 yearSpacing={40}
                 monthBorderColor="#ffffff"
-                dayBorderWidth={2}
+                dayBorderWidth={0.6}
+                monthBorderWidth={0}
                 dayBorderColor="#ffffff"
                 tooltip={CustomTooltip}
                 legends={[
