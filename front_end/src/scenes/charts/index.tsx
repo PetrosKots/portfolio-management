@@ -7,6 +7,7 @@ import { useSearchParams } from "react-router-dom";
 import  "../../globals.css"
 import _ from 'lodash' 
 import Linechart from './Linechart';
+import Skeleton from '@mui/material/Skeleton';
 
 interface DataItem {
   company_id: string  //company ticker
@@ -247,31 +248,49 @@ const index = () => {
       
       <Box sx={{marginTop: 10}}>
         <div className='h1-bold'>Performance By Month</div>
-      {selectedPortfolio && (
+      {selectedPortfolio && data.length>1? (
         <div>
         <Heatmap PerformanceData={CalculatePerformance(GroupData(data))} />
         
         
         </div>
+      ) : (
+        <Box>
+        <Skeleton />
+        <Skeleton animation="wave" />
+        <Skeleton animation={false} />
+        </Box>
       )}
       </Box>
       <Box sx={{marginTop: 10}}>
       <div className='h1-bold'>Daily Performance Since Inception</div>
-      {selectedPortfolio && data.length>1 &&(
+      {selectedPortfolio && data.length>1 ?(
         
         <div><Calendar PerformanceData={CalculatePerformance(GroupData(data))}/> </div>
         
         
-      )}
+      ) : (
+        <Box>
+        <Skeleton />
+        <Skeleton animation="wave" />
+        <Skeleton animation={false} />
+        </Box>)
+        }
       </Box>
 
       <Box sx={{marginTop: 10}}>
       <div className='h1-bold'>Performance Compared To S&P 500 Index</div>
-      {selectedPortfolio && data.length>1 &&(
+      {selectedPortfolio && data.length>1 ?(
         
         <div><Linechart  PerformanceData={CalculatePerformance(GroupData(data))}/> </div>
         
         
+      ): (
+        <Box>
+        <Skeleton />
+        <Skeleton animation="wave" />
+        <Skeleton animation={false} />
+        </Box>
       )}
       </Box>
       
