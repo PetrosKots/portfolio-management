@@ -16,12 +16,17 @@ const App = () => {
 
   //post request that fetches the latest closing prices for all the investment
   useEffect(() => {
-    axios.post(
+
+    const fetchData= () => {axios.post(
       "http://localhost:5000/run-python",
        
       {
         timeout: 10000,
       })
+    }
+    fetchData()
+    //updating the data every 5 seconds
+    setInterval(fetchData,5000)
   })
   
   return (
