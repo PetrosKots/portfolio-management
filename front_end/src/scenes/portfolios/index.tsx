@@ -83,75 +83,81 @@ const Portfolios = () => {
   //fetching the portfolio data and creating the datagrid columns 
   useEffect(() => {
     // Fetch portfolio data if a portfolio is selected
-
-    if (selectedPortfolio) {
-      
-      axios.get<PortfolioData[]>(`http://localhost:5000/portfolios?portfolio_name=${selectedPortfolio}`)
-        .then(response => {
-          if (response.data.length > 0) {
-            const firstRow = response.data[0];
-            
-            // Dynamically creating new columns for the data grid table based on
-            // the number of columns returned by the API response
-            const newColumns: GridColDef[] = Object.keys(firstRow)
-            .filter((key) => key !== "investment_id" && key!== "Last_Closing_USD") // Exclude the ID column
-            .map((key) => ({
-              field: key,
-              headerName: key.replace(/_/g, " ").toUpperCase(),
-              width: 150,
-              editable: false
-            }));
-            
-            //add extra custom columns to the datagrid 
-            const extraColumns: GridColDef[] = [
-              {
-                  field: "performance", 
-                  headerName: "PERFORMANCE", 
+    const fetchData = async () => {
+      if (selectedPortfolio) {
+        
+        axios.get<PortfolioData[]>(`http://localhost:5000/portfolios?portfolio_name=${selectedPortfolio}`)
+          .then(response => {
+            if (response.data.length > 0) {
+              const firstRow = response.data[0];
+              
+              // Dynamically creating new columns for the data grid table based on
+              // the number of columns returned by the API response
+              const newColumns: GridColDef[] = Object.keys(firstRow)
+              .filter((key) => key !== "investment_id" && key!== "Last_Closing_USD") // Exclude the ID column
+              .map((key) => ({
+                field: key,
+                headerName: key.replace(/_/g, " ").toUpperCase(),
+                width: 150,
+                editable: false
+              }));
+              
+              //add extra custom columns to the datagrid 
+              const extraColumns: GridColDef[] = [
+                {
+                    field: "performance", 
+                    headerName: "PERFORMANCE", 
+                    width: 150, 
+                    editable: false
+                },
+                {
+                  field: "market_value", 
+                  headerName: "MARKET VALUE", 
                   width: 150, 
                   editable: false
-              },
-              {
-                field: "market_value", 
-                headerName: "MARKET VALUE", 
-                width: 150, 
-                editable: false
+              }
+              ]
+              
+              // concatenating the columns returned from the API call and the custom created columns
+              const allColumns = [...newColumns, ...extraColumns];
+              
+              // Ensure each row has an "id", required for DataGrid
+              const updatedData: PortfolioData[] = response.data.map((row, index) => ({
+                id: row.investment_id,
+                ...row,
+                performance:(( (row[`Last_Closing`]-row.average_price)/row.average_price)*100).toFixed(1) +"%",
+                market_value:(row[`Last_Closing`]*row.quantity)
+              }));
+              setData(response.data)
+              
+              // Set DataGrid columns and data
+              setColumns(allColumns);
+              
+              setPortfolioData(updatedData);
+            } else {
+              // If API returns no data, clear table
+              setColumns([]);  
+              setPortfolioData([]);  
             }
-            ]
+          })
+          .catch(()=> {
             
-            // concatenating the columns returned from the API call and the custom created columns
-            const allColumns = [...newColumns, ...extraColumns];
-            
-            // Ensure each row has an "id", required for DataGrid
-            const updatedData: PortfolioData[] = response.data.map((row, index) => ({
-              id: row.investment_id,
-              ...row,
-              performance:(( (row[`Last_Closing`]-row.average_price)/row.average_price)*100).toFixed(1) +"%",
-              market_value:(row[`Last_Closing`]*row.quantity)
-            }));
-            setData(response.data)
-            
-            // Set DataGrid columns and data
-            setColumns(allColumns);
-            
-            setPortfolioData(updatedData);
-          } else {
-            // If API returns no data, clear table
+            // Clear data in case of error
             setColumns([]);  
             setPortfolioData([]);  
-          }
-        })
-        .catch(()=> {
-          
-          // Clear data in case of error
-          setColumns([]);  
-          setPortfolioData([]);  
-        });
+          });
 
-    } else {
-      // Clear table when no portfolio is selected
-      setColumns([]);  
-      setPortfolioData([]);  
-    }
+      } else {
+        // Clear table when no portfolio is selected
+        setColumns([]);  
+        setPortfolioData([]);  
+      }
+  }
+    fetchData()
+    
+    //fetching the latest data every 10 seconds
+    setInterval(fetchData,10000)
+     
   }, [selectedPortfolio]);
 
   //function to handle the click of the edit row button
