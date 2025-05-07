@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
 import Alert from '@mui/material/Alert';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -12,7 +12,6 @@ import FilledInput from '@mui/material/FilledInput';
 import{Box} from '@mui/material'
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-import Stack from '@mui/material/Stack';
 
 interface PopupProps {
   open: boolean;
@@ -22,14 +21,7 @@ interface PopupProps {
   availableQuantity: number|null
 }
 
-interface investment { 
-  company_id:string | null, 
-  date: Dayjs | null, 
-  amount_invested: string, 
-  quantity: string, 
-  average_price: string
 
-}
 const SellTickerPopup: React.FC<PopupProps> = ({ open, onClose, company, portfolio, availableQuantity }) => {
   
   

@@ -1,0 +1,83 @@
+
+services:
+  front_end:
+    build: ./front_end
+    container_name: front_end_c
+    ports:
+      - '8080:80'
+    depends_on:
+      - api
+    networks:
+      - mynetwork 
+
+  etl:
+    build: ./ETL
+    container_name: etl_c
+    depends_on:
+      - database
+    networks:
+      - mynetwork
+
+  database:
+    image: mysql:8.0.42
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: Kalakala99!
+      MYSQL_USER: test
+      MYSQL_DATABASE: portfolio_management
+      MYSQL_PASSWORD: mypass
+    ports:
+      - '3310:3306'
+    volumes:
+      - db_data:/var/lib/mysql
+    networks:
+      - mynetwork
+
+  api:
+    build: ./back_end
+    container_name: api_c
+    ports:
+      - '5000:5000'
+    environment:
+      DB_HOST: database
+      DB_USER: root
+      DB_PASSWORD: Kalakala99!
+      DB_NAME: portfolio_management
+    depends_on:
+      - database
+    networks:
+      - mynetwork
+  
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    container_name: phpmyadmin
+    restart: always
+    environment:
+      PMA_HOST: database         
+      PMA_PORT: 3306             
+      MYSQL_ROOT_PASSWORD: Kalakala99!
+    ports:
+      - '8081:80'  # Expose phpMyAdmin on port 8080
+    networks:
+      - mynetwork
+
+  nginx:
+    image: nginx:alpine
+    container_name: nginx_c
+    ports:
+      - '8080:80'
+    volumes:
+      - ./front_end/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+     
+    depends_on:
+      - front_end
+    networks:
+      - mynetwork
+
+volumes:
+  db_data:
+
+networks:
+  mynetwork:
+    driver: bridge

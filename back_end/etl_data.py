@@ -5,7 +5,6 @@ from datetime import date
 from datetime import datetime,timedelta
 import sys
 import json
-from curl_cffi import requests
 
 conn = pymysql.connect(
     host='database',
@@ -18,7 +17,7 @@ conn = pymysql.connect(
 )
   
 
-session = requests.Session(impersonate="chrome")
+
 #function that returns the desired period to fetch data from yfinance
 #based on the difference of the given date and today
 #The given date is the date returned from the front and refers to the date that an investment was made
@@ -61,7 +60,7 @@ def GetAndLoadHistoricalData(companies,dates):
     for index, row in data.iterrows() :
 
 
-        company_info=yf.Ticker(row['Company'],session=session).info #fetching the info for the company
+        company_info=yf.Ticker(row['Company']).info #fetching the info for the company
         name=company_info['longName'] #getting the full name of the company
 
         if 'sector' in company_info: #if there is a sector
@@ -70,7 +69,7 @@ def GetAndLoadHistoricalData(companies,dates):
             sector='ETF' #tickers with no sector are probably ETFs
         
         #get the historical data of the ticker for the desired period.Period accepts values like "1y" so we call the CreatePeriod function for the given date
-        hist_data=yf.Ticker(row['Company'],session=session).history( period=CreatePeriod(row['Date']) )
+        hist_data=yf.Ticker(row['Company']).history( period=CreatePeriod(row['Date']) )
          
         full_date_range = pd.date_range(start=hist_data.index.min(), end=hist_data.index.max(), freq='D')
 
@@ -108,7 +107,7 @@ def GetAndLoadMostRecentData():
         #for every company in the portfolio get the closing prices the last 30 days
         for company in companies:
 
-            most_recent_data=yf.Ticker( company['company_id'],session=session).history( period='1mo') 
+            most_recent_data=yf.Ticker( company['company_id']).history( period='1mo' ) 
 
             #Create a full date range for between the dates of the historical data as the api dont include weekends and holidays
             full_date_range = pd.date_range(start=most_recent_data.index.min(), end=most_recent_data.index.max(), freq='D') 
