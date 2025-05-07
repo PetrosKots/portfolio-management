@@ -1,13 +1,18 @@
 import pymysql
 import os
+import time
+
 
 conn = pymysql.connect(
-    host='localhost',
-    user='root',
-    password='Kalakala99!',  #Change to your password
+    host='database',
+    user='test',
+    password='mypass',
+    database='portfolio_management',
+    port=3306,
     charset='utf8mb4',
     cursorclass=pymysql.cursors.DictCursor
 )
+
 
 try:
     with conn.cursor() as cursor:

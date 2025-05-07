@@ -1,8 +1,8 @@
-import React, { useState,useEffect } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Box } from "@mui/material";
+import React, { useState} from "react";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button} from "@mui/material";
 import Textarea from '@mui/joy/Textarea';
 import axios from "axios";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 
 interface PopupProps {

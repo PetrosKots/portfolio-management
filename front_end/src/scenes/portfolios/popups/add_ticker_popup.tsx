@@ -42,8 +42,8 @@ const TickerPopup: React.FC<PopupProps> = ({ open, onClose, selectedPortfolio })
   const [investmentDict, setInvestmentDict] = useState<{ [key: string]: { quantity: string; avgPrice: string; amount: string; date: string }[] }>({}); //dict to hold investments for each ticker
   
   // Handle selection
-  const handleSelect = (event: any, newValue: TickerData | null) => {
-  
+  const handleSelect = (_event: any, newValue: TickerData | null) => {
+    
     if (newValue) { 
 
       //do nothing if the user selectes a ticker that is already selected
@@ -159,7 +159,7 @@ const TickerPopup: React.FC<PopupProps> = ({ open, onClose, selectedPortfolio })
           renderInput={(params) => <TextField {...params} label="Search Ticker or Company" />}
           onChange={handleSelect}
           inputValue={inputValue} // Controls the input text
-          onInputChange={(event, newInputValue) => setInputValue(newInputValue)} // Updates input text
+          onInputChange={(_event, newInputValue) => setInputValue(newInputValue)} // Updates input text
           value={selectedValue} // Ensures no old values are shown
         />
         <List>  

@@ -1,4 +1,4 @@
-import React, { useState, useEffect }  from 'react'
+import  { useState, useEffect }  from 'react'
 import { Box} from '@mui/material';
 import Heatmap from './Heatmap'
 import Calendar from './Calendar';
@@ -47,7 +47,7 @@ const index = () => {
           setData(response.data);//save the response to 'data' variable
           
         })
-        .catch((error) => {
+        .catch((_error) => {
           console.error("error while fetching the chart data");
         });
     }, [selectedPortfolio]);
@@ -138,7 +138,7 @@ const index = () => {
         //As more than one deposits/withdrawls can be made within a day,ReaturnEachPeriod is an array storing the return between two investments
         //For instance, if the portfolio value is 1000$ at a given T1 time and T2 is the time that we deposit 500$, to calculate the total TWR return for the day we need to firstly calculate
         //The return between T1 and T2
-        Object.entries(grouped).forEach(([companyId, data]) => {  //Calculating the value of the portfolio right before any deposit/withdrawl by iterating over every holding every day.
+        Object.entries(grouped).forEach(([_companyId, data]) => {  //Calculating the value of the portfolio right before any deposit/withdrawl by iterating over every holding every day.
         let total_quantity = 0 //total number of shares for each ticker
         let lastPrice=0        //last known price of the ticker
         

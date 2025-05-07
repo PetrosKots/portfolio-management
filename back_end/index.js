@@ -41,6 +41,7 @@ const db = mysql.createConnection({
   user: process.env.DB_USER,
   password: process.env.DB_PASSWORD,
   database: process.env.DB_NAME,
+  port:3306
 });
 
 db.connect((err) => {
@@ -246,7 +247,7 @@ app.post("/run-python", (req, res) => {
       return res.status(400).json({ error: "Invalid input format. Expected arrays." });
     }
 
-    const scriptPath = path.join(__dirname, "../ETL/etl_data.py"); //path to the python file
+    const scriptPath = path.join(__dirname, "./etl_data.py"); //path to the python file
 
     // Spawn the Python script
     const pythonProcess = spawn("python3", [scriptPath]); 
@@ -270,7 +271,7 @@ app.post("/run-python", (req, res) => {
     }
   else{
 
-    const scriptPath = path.join(__dirname, "../ETL/etl_data.py"); //path to the python file
+    const scriptPath = path.join(__dirname, "./etl_data.py"); //path to the python file
 
     // Spawn the Python script
     const pythonProcess = spawn("python3", [scriptPath]); 
