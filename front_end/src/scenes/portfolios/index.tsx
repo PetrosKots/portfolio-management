@@ -155,7 +155,6 @@ const Portfolios = () => {
   }
     fetchData()
     
-    //fetching the latest data every 10 seconds
     setInterval(fetchData,10000)
      
   }, [selectedPortfolio]);
@@ -243,7 +242,7 @@ const Portfolios = () => {
         
 
           {/* popup to add investment information about the selected ticker */}
-        <TickerPopup open={openTickerPopup} onClose={() => setOpenTickerPopup(false)} selectedPortfolio={selectedPortfolio} />
+        
 
       </GridToolbarContainer>
     );
@@ -437,7 +436,7 @@ const Portfolios = () => {
           <BootstrapButton variant="contained" size="sm" style={{ color: "white" }} onClick={() => handleDeletePortfolio()} >
             <DeleteOutlinedIcon sx={{ mr: 1 }} /> Delete Portfolio
           </BootstrapButton>
-          
+          <TickerPopup open={openTickerPopup} onClose={() => setOpenTickerPopup(false)} selectedPortfolio={selectedPortfolio} />
           <DeleteTickerPopup open={openDeleteTickerPopup} onClose={() => setOpenDeleteTickerPopup(false)} portfolio={selectedPortfolio} company={selectedCompany}/>
           <DeletePortfolioPopup open={openDeletePortfolioPopup} onClose={() => setOpenDeletePortfolioPopup(false)} selectedPortfolio={selectedPortfolio} />
           <SellTickerPopup open={openSellPopup} onClose={() => setSellPopup(false)} company={selectedCompany} portfolio={selectedPortfolio} availableQuantity={availableQuantity}/>
