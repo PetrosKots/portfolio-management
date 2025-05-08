@@ -18,13 +18,10 @@ const App = () => {
   useEffect(() => {
 
     const fetchData= () => {axios.post(
-      "http://localhost:5000/run-python",
+      "http://localhost:5000/run-python")
        
-      {
-        timeout: 10000,
-      })
     }
-    fetchData()
+    
     //updating the data every 5 seconds
     setInterval(fetchData,5000)
   })
