@@ -170,7 +170,7 @@ const SellTickerPopup: React.FC<PopupProps> = ({ open, onClose, company, portfol
         </FormControl>
         <LocalizationProvider dateAdapter={AdapterDayjs}>
         <DatePicker 
-          label="Select Investment Date"  
+          label="Select Date"  
           value={date}
           onChange={(newDate) => setDate(newDate)}                    
         />
@@ -185,7 +185,7 @@ const SellTickerPopup: React.FC<PopupProps> = ({ open, onClose, company, portfol
           variant="contained" 
           sx={{ marginTop: "10px", marginBottom: "10px" }}
         >
-          Add Investment
+          Add Sell Lot
         </Button>
         </Box>
         {/* List of Submitted Details */}
