@@ -2,8 +2,8 @@ import 'bootstrap/dist/css/bootstrap.min.css'
 import React, { useState, useEffect } from 'react';
 import { useSearchParams } from "react-router-dom";
 import axios from "axios";
-import { groupBy, values } from 'lodash';
-import { Box, Typography } from '@mui/material';
+import { groupBy} from 'lodash';
+import { Box} from '@mui/material';
 import { DataGrid, GridColDef, gridClasses, GridToolbarContainer, GridCellParams } from '@mui/x-data-grid';
 import { Button as BootstrapButton } from 'react-bootstrap';
 import { Button as MuiButton } from '@mui/material';
@@ -122,7 +122,7 @@ const Portfolios = () => {
               const allColumns = [...newColumns, ...extraColumns];
               
               // Ensure each row has an "id", required for DataGrid
-              const updatedData: PortfolioData[] = response.data.map((row, index) => ({
+              const updatedData: PortfolioData[] = response.data.map((row) => ({
                 id: row.investment_id,
                 ...row,
                 performance:(( (row[`Last_Closing`]-row.average_price)/row.average_price)*100).toFixed(1) +"%",
@@ -155,8 +155,10 @@ const Portfolios = () => {
   }
     fetchData()
     
+
     setInterval(fetchData,10000)
      
+
   }, [selectedPortfolio]);
 
   //function to handle the click of the edit row button
@@ -389,7 +391,7 @@ const Portfolios = () => {
       //but the European is open, the api returns data only for the european tickers, so the total value
       //is wrong as it only calculates the returned values
       //could either completely remove european stock or find another way to prevent it
-      const groupedByDate=Object.fromEntries( Object.entries(groupBy(data,'date')).filter( ([date, companies]) => companies.length==portfolioData.length ) )
+      const groupedByDate=Object.fromEntries( Object.entries(groupBy(data,'date')).filter( ([_date, companies]) => companies.length==portfolioData.length ) )
       
       
       

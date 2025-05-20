@@ -136,7 +136,7 @@ const Linechart: React.FC <Props> = ({PerformanceData}) => {
   let currentValue=0
   let previousValue=1000
 
-  const performance=data.map((values,index) => {
+  const performance=data.map((values,_index) => {
       
       //Calculate the value of the portfolio each day using the value the day before and today's percentage increase/decrease
       currentValue=previousValue*values[1] + previousValue
@@ -156,7 +156,7 @@ const Linechart: React.FC <Props> = ({PerformanceData}) => {
   currentValue=0
   previousValue=1000
 
-  const SnPperformance =forwardFill(SnPData,data[0][0]).map((day,index) => {
+  const SnPperformance =forwardFill(SnPData,data[0][0]).map((day,_index) => {
     currentValue=previousValue*(day.percentChange/100) +previousValue
     previousValue=currentValue
     return[day.date, ((currentValue-1000)/1000)*100 ]
