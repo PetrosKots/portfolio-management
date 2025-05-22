@@ -35,7 +35,9 @@ async function getExchangeRates() {
 //while the server is running, update the price every 24 hours
 setInterval(getExchangeRates,24*60*60*1000)
 
-// Connect to MySQL
+// for use in deployment with docker compose
+
+/*** 
 const db = mysql.createConnection({
   host: process.env.DB_HOST,
   user: process.env.DB_USER,
@@ -43,6 +45,17 @@ const db = mysql.createConnection({
   database: process.env.DB_NAME,
   port:3306
 });
+*/
+
+//for use in dev mode
+const db = mysql.createConnection({
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
+
+});
+
 
 db.connect((err) => {
   if (err) {
@@ -594,6 +607,34 @@ app.get("/historical/s&p500", async (req, res) => {
   }
 });
 
+
+
+//api end point to fecth S&P 500 historical data.
+app.get("/dividends", async (req, res) => {
+
+  db.query(`SELECT portfolio_id,dividend_amount,T1.company_id,date
+           FROM Dividends_History T1 INNER JOIN (
+           SELECT portfolio_id,company_id
+           FROM Investments
+           GROUP BY portfolio_id,company_id
+           ) T2 ON T1.company_id=T2.company_id `, 
+
+    (err,response) => {
+
+      if(err){
+
+        return res.status(500).json({error: err.message})
+
+      }else {
+
+        if (response.length>0){
+          return res.json(response)
+        }
+
+      }
+    }
+  )
+});
 
 // Start the server
 const PORT = process.env.PORT || 5000;
