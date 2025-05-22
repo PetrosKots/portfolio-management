@@ -1,16 +1,20 @@
 import yfinance as yf
 import pandas as pd
 import pymysql
+import os
 import pytz 
 from sqlalchemy import create_engine, text
+from dotenv import load_dotenv
 
+load_dotenv()
 
-
-host='localhost'
-user='root'
-password='Kalakala99!'
-database='portfolio_management'
-port=3306
+host=os.getenv("DB_HOST")
+user=os.getenv("DB_USER")
+password=os.getenv("DB_PASSWORD")
+database=os.getenv("DB_NAME")
+charset='utf8mb4'
+cursorclass=pymysql.cursors.DictCursor
+port=os.getenv("DB_PORT")
 
 
 engine = create_engine(f'mysql+pymysql://{user}:{password}@{host}:{port}/{database}')

@@ -3,9 +3,12 @@ import yfinance as yf
 import pandas as pd
 from datetime import date
 from datetime import datetime,timedelta
+import os
 import sys
 import json
+from dotenv import load_dotenv
 
+load_dotenv()
 # for use in deployment with docker compose
 """
 conn = pymysql.connect(
@@ -20,10 +23,11 @@ conn = pymysql.connect(
 """
 # for use in dev mode
 conn = pymysql.connect(
-    host='localhost',
-    user='root',
-    password='Kalakala99!',
-    db='portfolio_management',
+    host=os.getenv("DB_HOST"),
+    user=os.getenv("DB_USER"),
+    password=os.getenv("DB_PASSWORD"),
+    db=os.getenv("DB_NAME"),
+    port=int(os.getenv("DB_PORT")),
     charset='utf8mb4',
     cursorclass=pymysql.cursors.DictCursor
 )
