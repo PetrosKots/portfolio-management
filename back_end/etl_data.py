@@ -6,6 +6,8 @@ from datetime import datetime,timedelta
 import sys
 import json
 
+# for use in deployment with docker compose
+"""
 conn = pymysql.connect(
     host='database',
     user='test',
@@ -15,7 +17,16 @@ conn = pymysql.connect(
     charset='utf8mb4',
     cursorclass=pymysql.cursors.DictCursor
 )
-  
+"""
+# for use in dev mode
+conn = pymysql.connect(
+    host='localhost',
+    user='root',
+    password='Kalakala99!',
+    db='portfolio_management',
+    charset='utf8mb4',
+    cursorclass=pymysql.cursors.DictCursor
+)
 
 
 #function that returns the desired period to fetch data from yfinance
