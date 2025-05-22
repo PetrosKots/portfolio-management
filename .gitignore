@@ -10,6 +10,7 @@ lerna-debug.log*
 /back_end/node_modules/
 /front_end/node_modules/
 /front_end/.vite
+/back_end/.env
 
 dist
 dist-ssr
