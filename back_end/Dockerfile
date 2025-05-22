@@ -16,7 +16,7 @@ COPY . .
 
 RUN python3 -m venv /venv \
     && . /venv/bin/activate \
-    && pip install pymysql yfinance pandas cryptography 
+    && pip install pymysql yfinance pandas cryptography sqlalchemy
 
 # Set PATH so your Node app can run python from the venv
 
