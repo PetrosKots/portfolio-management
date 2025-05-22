@@ -2,7 +2,8 @@ import pymysql
 import os
 import time
 
-
+#for use in deployment with docker compose
+"""
 conn = pymysql.connect(
     host='database',
     user='test',
@@ -12,7 +13,16 @@ conn = pymysql.connect(
     charset='utf8mb4',
     cursorclass=pymysql.cursors.DictCursor
 )
+"""
 
+# for use in dev mode
+conn = pymysql.connect(
+    host='localhost',
+    user='root',
+    password='Kalakala99!',
+    charset='utf8mb4',
+    cursorclass=pymysql.cursors.DictCursor
+)
 
 try:
     with conn.cursor() as cursor:
@@ -56,8 +66,15 @@ try:
         "FOREIGN KEY (company_id) REFERENCES Companies(company_id))"
         )
 
+        Create_Dividends_History = (
+        "CREATE TABLE IF NOT EXISTS Dividends_History ("
+        "dividend_amount FLOAT, "
+        "company_id VARCHAR(10), "
+        "date DATE, " 
+        "FOREIGN KEY (company_id) REFERENCES Companies(company_id))"
+        )
 
-        queries=[Create_Companies,Create_Portfolios,Create_Investments,Create_Historical_data]
+        queries=[Create_Companies,Create_Portfolios,Create_Investments,Create_Historical_data,Create_Dividends_History]
 
         #Create the database
         cursor.execute("CREATE DATABASE IF NOT EXISTS portfolio_management")
